@@ -135,7 +135,7 @@
             </div>
           </div>
 
-          <!-- 補貨待確認區 -->
+          <!-- 補貨待確認區（大框框設計，減少捲軸限制） -->
           <div class="bg-[#fdfcf7] rounded-3xl p-5 shadow-sm border border-[#f1eada]">
             <div class="flex justify-between items-center mb-3">
               <h2 class="text-base font-bold flex items-center gap-2 text-[#7c6a52]">
@@ -190,7 +190,7 @@
               </div>
             </div>
 
-            <!-- 圖紙需求色號清單 -->
+            <!-- 圖紙需求色號清單（寬敞無滾輪設計） -->
             <div class="bg-[#faf7f0] rounded-2xl p-4 border border-[#ede3cf] flex-grow flex flex-col min-h-[220px]">
               <div class="flex justify-between items-center mb-2 pb-2 border-b border-[#ebdcb3]/60">
                 <span class="text-xs font-bold text-[#7c6a52]">所需色號與庫存</span>
@@ -316,7 +316,7 @@
 
     <!-- 底部資訊 -->
     <footer class="bg-[#f1eada] text-[#8c816f] text-xs py-6 border-t border-[#e2d5bd] text-center pb-28 lg:pb-6">
-      <p class="mb-1">※您的修改僅會即時儲存於此裝置中。</p>
+      <p class="mb-1">※您的修改與上傳圖片，僅會智慧壓縮後儲存於本機裝置中。</p>
     </footer>
 
     <!-- 彈出視窗 1：批次操作 Modal -->
@@ -347,7 +347,7 @@
         <div class="flex justify-between items-center mb-3">
           <h3 class="text-lg font-bold text-[#5c4e37] flex items-center gap-1.5">
             <i data-lucide="drafting-compass" class="w-5 h-5 text-[#cf9d67]"></i>
-            新增圖紙
+            圖紙需求
           </h3>
           <button onclick="closePatternCreator()" class="text-[#8c816f] hover:text-black">
             <i data-lucide="x" class="w-5 h-5"></i>
@@ -361,7 +361,7 @@
             <label class="block text-xs font-bold text-[#5c4e37] mb-1">圖紙名稱</label>
             <input type="text" id="new-pattern-name" placeholder="輸入名稱" class="w-full bg-[#faf7f0] border border-[#ede3cf] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
           </div>
-          <!-- 新增分類欄位 - 升級為下拉式選單與自訂功能 -->
+          <!-- 新增分類欄位 -->
           <div>
             <label class="block text-xs font-bold text-[#5c4e37] mb-1">圖紙分類</label>
             <div class="flex flex-col gap-1.5">
@@ -373,9 +373,9 @@
           </div>
         </div>
 
-        <!-- 圖片上傳區塊 -->
+        <!-- 圖片上傳區塊（內含縮圖自動壓縮引擎） -->
         <div class="mb-4">
-          <label class="block text-xs font-bold text-[#5c4e37] mb-1">上傳圖片</label>
+          <label class="block text-xs font-bold text-[#5c4e37] mb-1">上傳圖片（將自動進行高壓縮率輕量化）</label>
           <div class="flex items-center gap-3 bg-[#faf7f0] p-3 rounded-2xl border border-[#ede3cf]">
             <label class="bg-white hover:bg-[#faf7f0] text-[#5c4e37] border border-[#e6d9bf] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer whitespace-nowrap">
               <i data-lucide="image" class="w-4 h-4 text-[#bf9e74]"></i> 選擇圖片
@@ -636,7 +636,7 @@
       });
     }
 
-    // 內建示範圖紙（預設為未分類，無任何預設類別）
+    // 內建示範圖紙
     const initialPatternsData = {
       'JELLYCAT標籤': {
         requirements: [
@@ -708,7 +708,7 @@
 
       if (savedPatterns) {
         patterns = JSON.parse(savedPatterns);
-        // 相容與升級舊陣列格式為含分類的物件格式
+        // 相容與升級舊格式
         Object.keys(patterns).forEach(name => {
           if (Array.isArray(patterns[name])) {
             patterns[name] = {
@@ -768,13 +768,18 @@
       saveData();
     }
 
+    // 統一本機儲存（加入防容量爆滿機制）
     function saveData() {
-      localStorage.setItem('mard_beads_data', JSON.stringify(beads));
-      localStorage.setItem('mard_patterns_data', JSON.stringify(patterns));
+      try {
+        localStorage.setItem('mard_beads_data', JSON.stringify(beads));
+        localStorage.setItem('mard_patterns_data', JSON.stringify(patterns));
+      } catch (e) {
+        console.error("LocalStorage write failed:", e);
+        showToast("⚠️ 儲存失敗！本機瀏覽器容量已滿，請點選導出進行「完整備份」並適當清空圖紙！", "alert");
+      }
     }
 
     // --- STREAMING_CHUNK: Handlers for mobile transitions and navigation... ---
-    // 手機底欄分頁切換
     function switchMobileTab(tab) {
       activeMobileTab = tab;
 
@@ -820,7 +825,6 @@
       renderBeads();
     }
 
-    // 更新統計看板
     function renderStats() {
       document.getElementById('stat-total-colors').innerText = beads.length;
       
@@ -834,7 +838,6 @@
       document.getElementById('stat-out-of-stock').innerText = outOfStock;
     }
 
-    // 客製確認彈窗
     function showCustomConfirm(title, desc, onConfirm) {
       document.getElementById('confirm-modal-title').innerText = title;
       document.getElementById('confirm-modal-desc').innerText = desc;
@@ -852,7 +855,6 @@
       closeCustomConfirm();
     }
 
-    // 渲染 A-Z 分類導航
     function renderCategoryTabs() {
       const uniqueCats = Array.from(new Set(beads.map(b => b.category || getBeadCategory(b.code))));
       uniqueCats.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
@@ -885,7 +887,6 @@
     }
 
     // --- STREAMING_CHUNK: Main rendering engine for catalog cards... ---
-    // 渲染主色號清單
     function renderBeads() {
       const container = document.getElementById('beads-container');
       container.innerHTML = '';
@@ -972,14 +973,14 @@
             </div>
 
             <div class="space-y-1.5 mt-auto" onclick="event.stopPropagation();">
-              <!-- 消耗快速調整按鈕 - 按一次扣減 500 -->
+              <!-- 消耗快速調整按鈕 - 按一次快速消耗 500 -->
               <div class="flex items-center gap-1 bg-white/20 p-1 rounded-xl border" style="border-color: ${textColor}33;">
                 <button onclick="adjustStock('${bead.code}', -500)" class="w-6 h-6 rounded-lg bg-white/15 hover:bg-white/30 text-[9px] flex items-center justify-center font-bold" title="快速消耗 500 顆">-500</button>
                 <input type="number" id="consume-val-${bead.code}" placeholder="消耗" class="w-full bg-transparent text-center text-xs focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold placeholder-white/50" style="color: ${textColor};" onkeydown="handleQuickAction(event, '${bead.code}', 'consume')">
                 <button onclick="submitConsume('${bead.code}')" class="text-[10px] bg-white text-[#4a453e] font-bold px-1.5 py-1 rounded-lg hover:bg-slate-100 transition shadow-sm">消耗</button>
               </div>
 
-              <!-- 補貨快速調整按鈕 - 按一次補足 1000 -->
+              <!-- 補貨快速調整按鈕 - 按一次快速增加 1000 顆 -->
               <div class="flex items-center gap-1 bg-black/10 p-1 rounded-xl border" style="border-color: ${textColor}15;">
                 <button onclick="adjustStock('${bead.code}', 1000)" class="w-6 h-6 rounded-lg bg-white/15 hover:bg-white/30 text-[9px] flex items-center justify-center font-bold text-white" title="快速登記補貨 1000 顆">+1k</button>
                 <input type="number" id="restock-val-${bead.code}" placeholder="補貨" class="w-full bg-transparent text-center text-xs focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold placeholder-white/50" style="color: ${textColor};" onkeydown="handleQuickAction(event, '${bead.code}', 'restock')">
@@ -1052,7 +1053,6 @@
     }
 
     // --- STREAMING_CHUNK: Handlers for batch modifications and single updates... ---
-    // 色號多選
     function toggleBeadSelection(code) {
       if (selectedBeads.has(code)) {
         selectedBeads.delete(code);
@@ -1101,7 +1101,7 @@
       }
     }
 
-    // 調整庫存 (相容 -500 及 +1000 的單鍵快速按鈕)
+    // 調整庫存
     function adjustStock(code, amount) {
       const b = beads.find(x => x.code === code);
       if (b) {
@@ -1112,10 +1112,10 @@
             return;
           }
           b.stock -= actualDeduct;
-          showToast(`${code} 庫存已減去 ${actualDeduct}`);
+          showToast(`${code} 已快速消耗 ${actualDeduct} 顆`);
         } else {
           b.stock += amount;
-          showToast(`${code} 庫存已補上 ${amount}`);
+          showToast(`${code} 庫存已增加 ${amount} 顆`);
         }
         saveData();
         renderBeads();
@@ -1260,21 +1260,16 @@
     }
 
     // --- STREAMING_CHUNK: Filtering, sorting and rendering patterns... ---
-    // 渲染圖紙群組下拉選單（自動依分類及名稱排序，支援關鍵字即時搜尋）
     function populatePatternSelector() {
       const selector = document.getElementById('pattern-selector');
       const searchVal = document.getElementById('pattern-search-input').value.toLowerCase().trim();
       
-      // 暫存當前選取的項目以在重繪時嘗試還原
       const currentSelected = selector.value;
-      
       selector.innerHTML = '';
       
-      // 進行圖紙的分類歸類
       const grouped = {};
       
       Object.keys(patterns).forEach(name => {
-        // 搜尋過濾
         if (searchVal && !name.toLowerCase().includes(searchVal)) {
           return;
         }
@@ -1288,9 +1283,8 @@
         grouped[category].push(name);
       });
       
-      // 分類名稱字母與筆畫排序
       const sortedCategories = Object.keys(grouped).sort((a, b) => {
-        if (a === '未分類') return 1; // 未分類一律排在最後
+        if (a === '未分類') return 1;
         if (b === '未分類') return -1;
         return a.localeCompare(b, 'zh-Hant-TW');
       });
@@ -1301,7 +1295,6 @@
         const optgroup = document.createElement('optgroup');
         optgroup.label = cat;
         
-        // 分類內圖紙名稱字母與筆畫排序
         const sortedNames = grouped[cat].sort((a, b) => a.localeCompare(b, 'zh-Hant-TW', {numeric: true}));
         
         sortedNames.forEach(name => {
@@ -1321,7 +1314,6 @@
         opt.innerText = searchVal ? '🔍 無符合搜尋的圖紙' : '📅 尚未建立圖紙';
         selector.appendChild(opt);
       } else {
-        // 還原先前選取狀態
         if (currentSelected && patterns[currentSelected] && (!searchVal || currentSelected.toLowerCase().includes(searchVal))) {
           selector.value = currentSelected;
         }
@@ -1329,7 +1321,6 @@
     }
 
     // --- STREAMING_CHUNK: Managing select menus and custom categories for patterns... ---
-    // 切換是否顯示自訂分類輸入欄位
     function togglePatternCustomCategoryField() {
       const select = document.getElementById('new-pattern-category-select');
       const customInput = document.getElementById('new-pattern-category-custom');
@@ -1341,7 +1332,6 @@
       }
     }
 
-    // 動態生成自訂分類下拉式選單（含：未分類、現有自訂分類、自訂新分類選項）
     function updatePatternCategorySelect() {
       const select = document.getElementById('new-pattern-category-select');
       if (!select) return;
@@ -1349,13 +1339,11 @@
       const currentVal = select.value;
       select.innerHTML = '';
 
-      // 1. 預設「未分類」選項
       const optDefault = document.createElement('option');
       optDefault.value = '未分類';
       optDefault.innerText = '未分類';
       select.appendChild(optDefault);
 
-      // 2. 獲取所有目前圖紙中有在使用到的自定義分類
       const categories = new Set();
       Object.keys(patterns).forEach(name => {
         const pattern = patterns[name];
@@ -1367,7 +1355,6 @@
         }
       });
 
-      // 3. 排序並寫入現有分類選項
       const sortedCats = Array.from(categories).sort((a, b) => a.localeCompare(b, 'zh-Hant-TW'));
       sortedCats.forEach(cat => {
         const opt = document.createElement('option');
@@ -1376,7 +1363,6 @@
         select.appendChild(opt);
       });
 
-      // 4. 提供新增分類的選項
       const optCustom = document.createElement('option');
       optCustom.value = '__custom__';
       optCustom.innerText = '＋自訂新分類';
@@ -1400,7 +1386,6 @@
       renderPatternRequirements();
     }
 
-    // 渲染當前圖紙所需拼豆與充足狀態
     function renderPatternRequirements() {
       const selector = document.getElementById('pattern-selector');
       const list = document.getElementById('pattern-requirements-list');
@@ -1410,7 +1395,6 @@
       
       const patternName = selector.value;
 
-      // 載入預覽圖
       const imgContainer = document.getElementById('pattern-image-container');
       const previewImg = document.getElementById('pattern-preview-img');
       const downloadBtn = document.getElementById('pattern-download-btn');
@@ -1564,14 +1548,12 @@
     }
 
     // --- STREAMING_CHUNK: Setting up modal properties and handling dropdown selections... ---
-    // 進入圖紙建立介面
     function openPatternCreator() {
       editingPatternOldName = null;
       draftPatternBeads = [];
       draftPatternImage = '';
       document.getElementById('new-pattern-name').value = '';
       
-      // 更新分類下拉選單，並重置為「未分類」狀態
       updatePatternCategorySelect();
       document.getElementById('new-pattern-category-select').value = '未分類';
       document.getElementById('new-pattern-category-custom').value = '';
@@ -1590,7 +1572,6 @@
       document.getElementById('pattern-modal').classList.remove('hidden');
     }
 
-    // 進入圖紙修改模式 (將既有需求載入草稿)
     function editCurrentPattern() {
       const selector = document.getElementById('pattern-selector');
       const name = selector.value;
@@ -1602,13 +1583,11 @@
       
       document.getElementById('new-pattern-name').value = name;
       
-      // 更新分類下拉選單，並解析當前圖紙的分類
       updatePatternCategorySelect();
       const currentCategory = patterns[name].category || '未分類';
       const select = document.getElementById('new-pattern-category-select');
       const customInput = document.getElementById('new-pattern-category-custom');
 
-      // 檢查當前分類是否已存在於現有選項中
       let hasOption = false;
       for (let i = 0; i < select.options.length; i++) {
         if (select.options[i].value === currentCategory) {
@@ -1771,27 +1750,53 @@
       renderPatternDraftList();
     }
 
+    // --- STREAMING_CHUNK: Multi-photo client-side image compression using canvas ---
     function previewPatternImageUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      if (file.size > 1.5 * 1024 * 1024) {
-        showToast('圖片太大囉！請選擇 1.5MB 以下的檔案以防寫入失敗。', 'alert');
-        event.target.value = '';
-        return;
-      }
+      const statusText = document.getElementById('creator-image-status');
+      statusText.innerText = '圖片縮放壓縮中...';
 
       const reader = new FileReader();
       reader.onload = function(e) {
-        draftPatternImage = e.target.result;
-        const previewWrapper = document.getElementById('creator-image-preview-wrapper');
-        const previewImg = document.getElementById('creator-image-preview');
-        const statusText = document.getElementById('creator-image-status');
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const max_size = 800; // 手機照片等比例最大縮放至 800px
 
-        previewWrapper.classList.remove('hidden');
-        previewImg.src = draftPatternImage;
-        statusText.innerText = '圖片上傳成功';
-        lucide.createIcons();
+          if (width > height) {
+            if (width > max_size) {
+              height *= max_size / width;
+              width = max_size;
+            }
+          } else {
+            if (height > max_size) {
+              width *= max_size / height;
+              height = max_size;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // 核心：採用 0.7 壓縮率的 JPEG，能將原本數 MB 的手機照片完美降低至 50KB ~ 100KB！
+          draftPatternImage = canvas.toDataURL('image/jpeg', 0.7);
+
+          const previewWrapper = document.getElementById('creator-image-preview-wrapper');
+          const previewImg = document.getElementById('creator-image-preview');
+
+          previewWrapper.classList.remove('hidden');
+          previewImg.src = draftPatternImage;
+          statusText.innerText = '智慧壓縮完成，已節省空間！';
+          lucide.createIcons();
+        };
+        img.src = e.target.result;
       };
       reader.readAsDataURL(file);
     }
@@ -1826,7 +1831,6 @@
       const nameInput = document.getElementById('new-pattern-name');
       const name = nameInput.value.trim();
 
-      // 解析分類選擇或自訂輸入
       const select = document.getElementById('new-pattern-category-select');
       const customInput = document.getElementById('new-pattern-category-custom');
       
@@ -2090,7 +2094,6 @@
     }
 
     // --- STREAMING_CHUNK: Exporting and importing JSON with full categories... ---
-    // 頂部導出下拉選單切換
     function toggleExportDropdown(e) {
       e.stopPropagation();
       const dropdown = document.getElementById('export-dropdown');
@@ -2105,7 +2108,6 @@
       }
     });
 
-    // 1. 全系統完整備份 (.json) - 包含圖紙分類
     function exportSystemData() {
       const backupObj = {
         app: "BeadCraft_MARD",
@@ -2127,7 +2129,6 @@
       showToast('🎉 系統全資料備份已成功導出！(包含自訂配方與分類設定)');
     }
 
-    // 2. 導入
     function importSystemData(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -2200,7 +2201,6 @@
     }
 
     // --- STREAMING_CHUNK: Processing batch items and table templates... ---
-    // 批次修改視窗管理
     function openBatchModal(type) {
       currentBatchActionType = type;
       const title = document.getElementById('batch-modal-title');
@@ -2375,7 +2375,6 @@
       );
     }
 
-    // 吐司通知
     function showToast(message, type = 'info') {
       const toast = document.getElementById('toast');
       const icon = document.getElementById('toast-icon');
