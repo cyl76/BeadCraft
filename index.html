@@ -891,7 +891,7 @@
         return;
       }
 
-      filtered.forEach(bead => {
+            filtered.forEach(bead => {
         const isSelected = selectedBeads.has(bead.code);
         const textColor = getContrastColor(bead);
         const cardStyle = `background-color: ${bead.color}; color: ${textColor}; border-color: ${textColor}22;`;
@@ -934,15 +934,16 @@
             </div>
 
             <div class="space-y-1.5 mt-auto" onclick="event.stopPropagation();">
-              <!-- 消耗輸入框 (按鈕優雅白底黑字) -->
+              <!-- 消耗輸入框 (按鈕優雅白底黑字) - 按一次減少 500 顆 -->
               <div class="flex items-center gap-1 bg-white/20 p-1 rounded-xl border" style="border-color: ${textColor}33;">
-                <button onclick="adjustStock('${bead.code}', -100)" class="w-6 h-6 rounded-lg bg-white/15 hover:bg-white/30 text-xs flex items-center justify-center font-bold">-</button>
+                <button onclick="adjustStock('${bead.code}', -500)" class="w-6 h-6 rounded-lg bg-white/15 hover:bg-white/30 text-xs flex items-center justify-center font-bold">-</button>
                 <input type="number" id="consume-val-${bead.code}" placeholder="消耗數量" class="w-full bg-transparent text-center text-xs focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold" style="color: ${textColor};" onkeydown="handleQuickAction(event, '${bead.code}', 'consume')">
                 <button onclick="submitConsume('${bead.code}')" class="text-[10px] bg-white text-[#4a453e] font-bold px-1.5 py-1 rounded-lg hover:bg-slate-100 transition shadow-sm">消耗</button>
               </div>
 
-              <!-- 補貨輸入框 (按鈕優雅白底黑字) -->
+              <!-- 補貨輸入框 (按鈕優雅白底黑字) - 新增一個 + 按一次補貨 1000 顆 -->
               <div class="flex items-center gap-1 bg-black/10 p-1 rounded-xl border" style="border-color: ${textColor}15;">
+                <button onclick="adjustStock('${bead.code}', 1000)" class="w-6 h-6 rounded-lg bg-white/15 hover:bg-white/30 text-xs flex items-center justify-center font-bold">+</button>
                 <input type="number" id="restock-val-${bead.code}" placeholder="補貨數量" class="w-full bg-transparent text-center text-xs focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold" style="color: ${textColor};" onkeydown="handleQuickAction(event, '${bead.code}', 'restock')">
                 <button onclick="submitRestock('${bead.code}')" class="text-[10px] bg-white text-[#4a453e] font-bold px-1.5 py-1 rounded-lg hover:bg-slate-100 transition shadow-sm">補貨</button>
               </div>
