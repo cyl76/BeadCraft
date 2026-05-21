@@ -1,0 +1,2107 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>BeadCraft</title>
+
+  <!-- iOS ICON -->
+  <link rel="apple-touch-icon" href="https://i.postimg.cc/0jKxZDqz/1.png">
+  <link rel="icon" type="image/png" href="https://i.postimg.cc/0jKxZDqz/1.png">
+
+  <!-- PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#faf8f5">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght=300;400;500;700;900&display=swap');
+
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #faf8f5;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #e6dfd5;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #d4cbbd;
+    }
+
+    input::placeholder {
+      color: currentColor !important;
+      opacity: 0.55 !important;
+    }
+  </style>
+</head>
+<body class="bg-[#faf8f5] text-[#4a453e] min-h-screen">
+
+  <div id="app" class="flex flex-col min-h-screen">
+    <!-- 頂部溫柔導覽列 - 奶油米白風 -->
+    <header class="bg-[#f5ebd9] border-b border-[#e9dcbf] text-[#5c4e37] shadow-sm sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 py-3 md:py-4 flex flex-col md:flex-row justify-between items-center gap-2 md:gap-4">
+        <div class="flex items-center gap-3">
+          <div class="bg-[#efe2c9] p-2.5 rounded-2xl">
+            <i data-lucide="database" class="w-6 h-6 text-[#8b7355]"></i>
+          </div>
+          <div>
+            <h1 class="text-xl md:text-2xl font-black tracking-wider text-[#5c4e37]">拼豆小幫手</h1>
+          </div>
+        </div>
+        
+        <!-- 頂部操作 -->
+        <div class="flex flex-wrap justify-center gap-2">
+          <button onclick="openBeadModal()" class="bg-[#bf9e74] hover:bg-[#af8d63] text-white px-3 py-1.5 rounded-xl text-sm font-medium flex items-center gap-1.5 transition shadow-sm">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> 新增拼豆
+          </button>
+          <button onclick="exportToCSV()" class="bg-white/70 hover:bg-white text-[#5c4e37] border border-[#e6d9bf] px-3 py-1.5 rounded-xl text-sm font-medium flex items-center gap-1.5 transition shadow-sm">
+            <i data-lucide="download" class="w-4 h-4"></i> 導出
+          </button>
+          <label class="bg-white/70 hover:bg-white text-[#5c4e37] border border-[#e6d9bf] px-3 py-1.5 rounded-xl text-sm font-medium flex items-center gap-1.5 transition shadow-sm cursor-pointer">
+            <i data-lucide="upload" class="w-4 h-4"></i> 導入
+            <input type="file" id="csv-file" accept=".csv" class="hidden" onchange="importCSV(event)">
+          </label>
+          <button onclick="resetToDefault()" class="bg-[#e49b8c] hover:bg-[#db8978] text-white px-3 py-1.5 rounded-xl text-sm font-medium flex items-center gap-1.5 transition shadow-sm">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i> 歸零
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主要內容區：在手機板增加 pb-24 以防止被底部 Tab Bar 遮擋 -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 pb-24 lg:pb-6">
+      
+      <!-- 左側：圖紙消耗 & 待確認補貨區 (手機版透過下方 Tab Bar 切換，電腦版維持並排) -->
+      <section class="lg:col-span-4 flex flex-col gap-6">
+        
+        <!-- 手機「補貨」分頁內容 -->
+        <div id="mobile-tab-restock" class="hidden lg:flex flex-col gap-6">
+          <!-- 儀表板看板 -->
+          <div class="bg-[#fdfcf7] rounded-3xl p-5 shadow-sm border border-[#f1eada]">
+            <h2 class="text-base font-bold mb-4 flex items-center gap-2 text-[#7c6a52]">
+              <i data-lucide="pie-chart" class="w-4 h-4"></i> 倉庫分析
+            </h2>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-[#fcf8f0] p-4 rounded-2xl border border-[#ede3cf]">
+                <span class="text-xs text-[#8b7e6d] block font-medium">色號數</span>
+                <span id="stat-total-colors" class="text-xl font-black text-[#5c4e37]">0</span>
+              </div>
+              <div class="bg-[#f4efe3] p-4 rounded-2xl border border-[#e2d5bd]">
+                <span class="text-xs text-[#8b7e6d] block font-medium">總庫存</span>
+                <span id="stat-total-beads" class="text-xl font-black text-[#8a7251]">0</span>
+              </div>
+              <div class="bg-[#faf5eb] p-4 rounded-2xl border border-[#ede3cf]">
+                <span class="text-xs text-[#8b7e6d] block font-medium">登記補貨</span>
+                <span id="stat-pending-types" class="text-xl font-black text-[#bca17a]">0</span>
+              </div>
+              <div class="bg-[#fcf3ef] p-4 rounded-2xl border border-[#f5ded6]">
+                <span class="text-xs text-[#a37c74] block font-medium">無庫存</span>
+                <span id="stat-out-of-stock" class="text-xl font-black text-[#d37a6a]">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 補貨待確認區 -->
+          <div class="bg-[#fdfcf7] rounded-3xl p-5 shadow-sm border border-[#f1eada]">
+            <div class="flex justify-between items-center mb-3">
+              <h2 class="text-base font-bold flex items-center gap-2 text-[#7c6a52]">
+                <i data-lucide="shopping-bag" class="w-4 h-4"></i> 補貨點收
+              </h2>
+              <button onclick="confirmAllRestock()" class="text-xs bg-[#cf9d67] hover:bg-[#bc8954] text-white px-2.5 py-1.5 rounded-lg transition font-medium">
+                一鍵補貨
+              </button>
+            </div>
+      
+            <div class="max-h-[160px] overflow-y-auto space-y-2 pr-1" id="pending-restock-list">
+              <!-- 待補貨清單會動態生成於此 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 手機「圖紙」分頁內容 -->
+        <div id="mobile-tab-patterns" class="hidden lg:flex flex-col gap-6 flex-grow">
+          <!-- 圖紙配對與消耗 -->
+          <div class="bg-[#fdfcf7] rounded-3xl p-5 shadow-sm border border-[#f1eada] flex-grow flex flex-col h-full">
+            <div class="flex justify-between items-center mb-2">
+              <h2 class="text-base font-bold flex items-center gap-2 text-[#7c6a52]">
+                <i data-lucide="palette" class="w-4 h-4"></i> 拼豆圖紙
+              </h2>
+              <button onclick="openPatternCreator()" class="text-xs text-[#cf9d67] hover:text-[#bc8954] font-bold flex items-center gap-1">
+                <i data-lucide="plus" class="w-3 h-3"></i> 新增圖紙
+              </button>
+            </div>
+            
+            <div class="mb-4">
+              <label class="block text-[11px] font-bold text-[#8c816f] mb-1">選擇圖紙</label>
+              <div class="flex gap-1.5">
+                <select id="pattern-selector" onchange="resetPatternSelections(); renderPatternRequirements()" class="flex-grow bg-[#faf7f0] border border-[#ede3cf] text-[#4a453e] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
+                  <!-- 圖紙選項 -->
+                </select>
+                <button onclick="editCurrentPattern()" class="text-[#bf9e74] hover:bg-[#fcf3ef] border border-[#ede3cf] p-2 rounded-xl transition" title="修改此圖紙">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </button>
+                <button onclick="deleteCurrentPattern()" class="text-[#e49b8c] hover:bg-[#fcf3ef] border border-[#f5ded6] p-2 rounded-xl transition" title="刪除此圖紙">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="bg-[#faf7f0] rounded-2xl p-4 border border-[#ede3cf] flex-grow flex flex-col min-h-[220px]">
+              <div class="flex justify-between items-center mb-2 pb-2 border-b border-[#ebdcb3]/60">
+                <span class="text-xs font-bold text-[#7c6a52]">所需色號與庫存</span>
+              </div>
+              
+              <!-- 圖紙參考圖片容器 -->
+              <div id="pattern-image-container" class="hidden mb-3 border border-[#ede3cf] rounded-2xl overflow-hidden bg-[#faf8f5] p-1.5 relative group shadow-inner flex justify-center items-center min-h-[140px]">
+                <img id="pattern-preview-img" src="" class="w-full max-h-64 object-contain rounded-xl cursor-zoom-in hover:brightness-95 transition" onclick="zoomPatternImage()" alt="圖紙參考圖" title="點擊放大預覽">
+                <div class="absolute bottom-3 right-3 flex gap-1">
+                  <a id="pattern-download-btn" href="#" download="pattern.png" class="bg-[#cf9d67]/90 hover:bg-[#cf9d67] backdrop-blur-sm text-white p-2 rounded-xl shadow-md transition flex items-center justify-center" title="下載此圖片">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                  </a>
+                </div>
+              </div>
+
+              <div id="pattern-requirements-list" class="flex-grow overflow-y-auto space-y-3 pr-1 text-sm max-h-[250px]">
+                <!-- 需求列表 -->
+              </div>
+
+              <div class="mt-4 pt-3 border-t border-[#ede3cf] flex gap-2">
+                <button onclick="deductPatternStock()" id="btn-deduct-pattern" class="w-full bg-[#bf9e74] hover:bg-[#af8d63] text-white font-bold text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
+                  <i data-lucide="check" class="w-4 h-4"></i> 扣除庫存
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- 右側拼豆庫存列表 / 手機「色號」分頁內容 -->
+      <section id="mobile-tab-beads" class="hidden lg:col-span-8 lg:flex flex-col gap-4">
+        
+        <!-- 搜尋與篩選列 -->
+        <div class="bg-[#fdfcf7] rounded-3xl p-4 shadow-sm border border-[#f1eada] flex flex-col md:flex-row gap-4 items-center justify-between">
+          
+          <!-- 搜尋與顯示模式 -->
+          <div class="relative w-full md:w-72">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-[#8b7e6d]">
+              <i data-lucide="search" class="w-4 h-4"></i>
+            </span>
+            <input type="text" id="search-input" oninput="filterBeads()" placeholder="搜尋色號" class="w-full bg-[#faf7f0] border border-[#ede3cf] rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
+          </div>
+
+          <!-- 篩選器與視圖切換 -->
+          <div class="flex flex-wrap gap-2 w-full md:w-auto justify-end">
+            <!-- 快速過濾 -->
+            <select id="stock-filter" onchange="filterBeads()" class="bg-[#faf7f0] border border-[#ede3cf] text-[#4a453e] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
+              <option value="all">所有庫存狀態</option>
+              <option value="instock">有存貨</option>
+              <option value="lowstock">低庫存 (小於500)</option>
+              <option value="outofstock">無庫存</option>
+              <option value="haspending">待確認補貨</option>
+            </select>
+
+            <!-- 檢視模式切換 -->
+            <div class="bg-[#f4efe3] p-1 rounded-xl flex gap-1">
+              <button onclick="setViewMode('grid')" id="btn-view-grid" class="p-1.5 rounded-lg text-[#5c4e37] bg-white shadow-sm transition">
+                <i data-lucide="grid" class="w-4 h-4"></i>
+              </button>
+              <button onclick="setViewMode('list')" id="btn-view-list" class="p-1.5 rounded-lg text-[#5c4e37] transition">
+                <i data-lucide="list" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MARD 大分類導覽 Tabs (置頂 + 精緻毛玻璃效果) -->
+        <div class="sticky top-[118px] md:top-[74px] z-30 bg-[#faf8f5]/90 backdrop-blur-sm py-2">
+          <div class="bg-[#fdfcf7] rounded-3xl px-4 py-3 shadow-sm border border-[#f1eada] overflow-x-auto whitespace-nowrap">
+            <div class="flex gap-1.5" id="category-tabs">
+              <!-- 分類標籤會在這裡動態渲染 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 批次管理工具 -->
+        <div id="batch-bar" class="hidden bg-[#fbf5e7] border border-[#eddcb5] rounded-2xl px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xs bg-[#cf9d67] text-white font-bold px-2 py-0.5 rounded-full" id="batch-count">0</span>
+            <span class="text-xs text-[#5c4e37] font-medium">個色號已被選取</span>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="openBatchModal('consume')" class="bg-[#e49b8c] hover:bg-[#db8978] text-white text-xs px-3 py-1.5 rounded-lg transition font-medium">
+              批次消耗
+            </button>
+            <button onclick="openBatchModal('restock')" class="bg-[#bf9e74] hover:bg-[#af8d63] text-white text-xs px-3 py-1.5 rounded-lg transition font-medium">
+              批次補貨
+            </button>
+            <button onclick="clearBatchSelection()" class="text-slate-500 hover:text-slate-700 text-xs px-2 py-1.5 transition">
+              取消選擇
+            </button>
+          </div>
+        </div>
+
+        <!-- 拼豆主要顯示區 -->
+        <div id="beads-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 flex-grow content-start min-h-[450px]">
+          <!-- 卡片/列表內容將動態渲染於此 -->
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- 手機底欄 Tab Bar：僅於 lg 以下螢幕顯示 -->
+    <div id="mobile-tab-bar" class="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-[#fdfcf7] border-t border-[#f1eada] shadow-[0_-4px_16px_rgba(92,78,55,0.08)] rounded-t-3xl px-6 py-2.5 flex justify-around items-center">
+      <!-- 左: 補貨 -->
+      <button onclick="switchMobileTab('restock')" id="tab-btn-restock" class="flex flex-col items-center gap-1 px-5 py-2 rounded-2xl transition-all text-[#8c816f] bg-transparent">
+        <i data-lucide="shopping-bag" class="w-5.5 h-5.5"></i>
+        <span class="text-[11px] font-bold">補貨</span>
+      </button>
+      <!-- 中: 色號 -->
+      <button onclick="switchMobileTab('beads')" id="tab-btn-beads" class="flex flex-col items-center gap-1 px-5 py-2 rounded-2xl transition-all text-[#8c816f] bg-transparent">
+        <i data-lucide="grid" class="w-5.5 h-5.5"></i>
+        <span class="text-[11px] font-bold">色號</span>
+      </button>
+      <!-- 右: 圖紙 -->
+      <button onclick="switchMobileTab('patterns')" id="tab-btn-patterns" class="flex flex-col items-center gap-1 px-5 py-2 rounded-2xl transition-all text-[#8c816f] bg-transparent">
+        <i data-lucide="palette" class="w-5.5 h-5.5"></i>
+        <span class="text-[11px] font-bold">圖紙</span>
+      </button>
+    </div>
+
+    <!-- 底部資訊 -->
+    <footer class="bg-[#f1eada] text-[#8c816f] text-xs py-6 border-t border-[#e2d5bd] text-center pb-28 lg:pb-6">
+      <p class="mb-1">※您的修改僅會即時儲存於此裝置中。</p>
+    </footer>
+
+    <!-- 彈出視窗 1：批次操作 Modal -->
+    <div id="batch-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] px-4 animate-in fade-in duration-200">
+      <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
+        <h3 id="batch-modal-title" class="text-lg font-bold mb-2 text-[#5c4e37]">批次操作</h3>
+        <p id="batch-modal-desc" class="text-xs text-[#8c816f] mb-4">請輸入想要對所選色號進行的操作數量</p>
+        
+        <div class="mb-4">
+          <label class="block text-xs font-bold text-slate-500 mb-1" id="batch-input-label">數量</label>
+          <input type="number" id="batch-input-value" min="1" value="500" class="w-full bg-[#faf7f0] border border-[#ede3cf] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button onclick="closeBatchModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition">
+            取消
+          </button>
+          <button id="btn-batch-submit" onclick="executeBatchAction()" class="px-4 py-2 text-sm font-medium text-white bg-[#cf9d67] hover:bg-[#bc8954] rounded-xl transition">
+            確定
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 彈出視窗 2：新增圖紙需求設計 Modal -->
+    <div id="pattern-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] px-4 overflow-y-auto py-10 animate-in fade-in duration-200">
+      <div class="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="text-lg font-bold text-[#5c4e37] flex items-center gap-1.5">
+            <i data-lucide="drafting-compass" class="w-5 h-5 text-[#cf9d67]"></i>
+            圖紙需求
+          </h3>
+          <button onclick="closePatternCreator()" class="text-[#8c816f] hover:text-black">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-xs font-bold text-[#5c4e37] mb-1">圖紙名稱</label>
+          <input type="text" id="new-pattern-name" placeholder="輸入名稱" class="w-full bg-[#faf7f0] border border-[#ede3cf] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
+        </div>
+
+        <!-- 圖片上傳區塊 -->
+        <div class="mb-4">
+          <label class="block text-xs font-bold text-[#5c4e37] mb-1">上傳參考圖片 (選填，可預覽及下載)</label>
+          <div class="flex items-center gap-3 bg-[#faf7f0] p-3 rounded-2xl border border-[#ede3cf]">
+            <label class="bg-white hover:bg-[#faf7f0] text-[#5c4e37] border border-[#e6d9bf] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer whitespace-nowrap">
+              <i data-lucide="image" class="w-4 h-4 text-[#bf9e74]"></i> 選擇圖片
+              <input type="file" id="pattern-image-input" accept="image/*" class="hidden" onchange="previewPatternImageUpload(event)">
+            </label>
+            <div id="creator-image-preview-wrapper" class="hidden relative w-12 h-12 rounded-xl border border-[#ede3cf] overflow-hidden bg-white flex-shrink-0">
+              <img id="creator-image-preview" src="" class="w-full h-full object-cover">
+              <button onclick="clearCreatorImage()" class="absolute inset-0 bg-black/40 hover:bg-black/60 flex items-center justify-center text-white transition" title="移除圖片">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+            <span id="creator-image-status" class="text-[11px] text-[#8c816f] truncate max-w-[200px]">尚未選擇圖片</span>
+          </div>
+        </div>
+
+        <!-- 選擇色號與數量行 -->
+        <div class="bg-[#faf7f0] p-4 rounded-2xl border border-[#ede3cf] mb-4 space-y-3">
+          <span class="text-xs font-bold text-[#7c6a52] block mb-1">添加色號</span>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- 選擇主色號 -->
+            <div>
+              <label class="block text-[10px] font-bold text-[#8c816f] mb-1">色號</label>
+              <input type="text" id="pattern-item-search" list="bead-options" placeholder="輸入色號" class="w-full bg-white border border-[#ede3cf] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
+            </div>
+            <!-- 選擇多個替代色號 -->
+            <div>
+              <label class="block text-[10px] font-bold text-[#8c816f] mb-1">替代色號</label>
+              <input type="text" id="pattern-item-alt" list="bead-options" placeholder="例如：A1, A2" class="w-full bg-white border border-[#ede3cf] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
+            </div>
+          </div>
+
+          <div class="flex gap-2 items-end pt-1">
+            <!-- 所需數量 -->
+            <div class="flex-grow">
+              <label class="block text-[10px] font-bold text-[#8c816f] mb-1">需求數量 (顆)</label>
+              <input type="number" id="pattern-item-qty" min="1" placeholder="數量" class="w-full bg-white border border-[#ede3cf] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
+            </div>
+            <!-- 新增按鈕 -->
+            <button onclick="addBeadToDraftPattern()" class="bg-[#cf9d67] hover:bg-[#bc8954] text-white px-5 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition h-[38px] shadow-sm">
+              <i data-lucide="plus" class="w-4 h-4"></i> 添加
+            </button>
+          </div>
+        </div>
+
+        <!-- 目前已添加項目清單 -->
+        <div class="flex-grow overflow-y-auto mb-4 border border-[#ede3cf] rounded-2xl p-3 min-h-[120px] max-h-[220px]">
+          <span class="text-xs font-bold text-[#8c816f] block mb-2">目前已添加色號：</span>
+          <div id="pattern-draft-list" class="space-y-1.5">
+            <!-- 動態加入 Draft -->
+            <div class="text-center py-6 text-xs text-slate-400">目前尚無色號，請於上方新增</div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t border-[#ede3cf]">
+          <button onclick="closePatternCreator()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition">
+            取消
+          </button>
+          <button onclick="saveNewPattern()" class="px-5 py-2.5 text-sm font-bold text-white bg-[#bf9e74] hover:bg-[#af8d63] rounded-xl shadow-sm transition">
+            儲存圖紙
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 彈出視窗 3：拼豆色號編輯 Modal -->
+    <div id="bead-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] px-4 animate-in fade-in duration-200">
+      <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
+        <div class="flex justify-between items-center mb-4">
+          <h3 id="bead-modal-title" class="text-lg font-bold text-[#5c4e37] flex items-center gap-2">
+            <i data-lucide="edit-3" class="w-5 h-5 text-[#cf9d67]"></i>
+            設定拼豆色號
+          </h3>
+          <button onclick="closeBeadModal()" class="text-[#8c816f] hover:text-black">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <!-- 色號 -->
+          <div>
+            <label class="block text-xs font-bold text-[#7c6a52] mb-1">色號</label>
+            <input type="text" id="edit-bead-code" placeholder="輸入色號" class="w-full bg-[#faf7f0] border border-[#ede3cf] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67] uppercase">
+          </div>
+
+          <!-- 顏色 -->
+          <div>
+            <label class="block text-xs font-bold text-[#7c6a52] mb-1">顏色選擇</label>
+            <div class="flex gap-2">
+              <input type="color" id="edit-bead-color-picker" value="#cf9d67" class="w-10 h-10 rounded-xl border border-[#ede3cf] cursor-pointer bg-transparent" onchange="syncEditColorText(this.value)">
+              <input type="text" id="edit-bead-color-hex" value="#cf9d67" placeholder="#HEX 顏色碼" class="flex-grow bg-[#faf7f0] border border-[#ede3cf] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]" onchange="syncEditColorPicker(this.value)">
+            </div>
+          </div>
+          
+          <!-- 字體顏色 -->
+          <div>
+            <label class="block text-xs font-bold text-[#7c6a52] mb-1">自訂字體顏色</label>
+            <select id="edit-bead-text-color" class="w-full bg-[#faf7f0] border border-[#ede3cf] text-[#4a453e] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
+              <option value="auto">自動</option>
+              <option value="#ffffff">白字 (#ffffff)</option>
+              <option value="#8D877F">黑字 (#8D877F)</option>
+            </select>
+          </div>
+
+          <!-- 分類 -->
+          <div>
+            <label class="block text-xs font-bold text-[#7c6a52] mb-1">分類</label>
+            <div class="grid grid-cols-2 gap-2">
+              <select id="edit-bead-category-select" onchange="toggleEditCustomCategoryField()" class="bg-[#faf7f0] border border-[#ede3cf] text-[#4a453e] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
+                <!-- Dynamically populated existing categories -->
+              </select>
+              <input type="text" id="edit-bead-category-custom" placeholder="輸入自訂分類" class="hidden bg-[#faf7f0] border border-[#ede3cf] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67] uppercase">
+            </div>
+          </div>
+
+          <!-- 備註/名稱 -->
+          <div>
+            <label class="block text-xs font-bold text-[#7c6a52] mb-1">備註</label>
+            <input type="text" id="edit-bead-name" placeholder="例如: 透明、夜光" class="w-full bg-[#faf7f0] border border-[#ede3cf] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center mt-6 pt-4 border-t border-[#ede3cf]">
+          <button id="btn-delete-bead" onclick="promptDeleteBead()" class="hidden px-4 py-2 text-sm font-medium text-rose-500 hover:bg-rose-50 rounded-xl transition flex items-center gap-1">
+            <i data-lucide="trash-2" class="w-4 h-4"></i> 刪除
+          </button>
+          <div class="flex gap-2 ml-auto">
+            <button onclick="closeBeadModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition">
+              取消
+            </button>
+            <button onclick="submitBead()" class="px-5 py-2 text-sm font-bold text-white bg-[#cf9d67] hover:bg-[#bc8954] rounded-xl shadow-sm transition">
+              儲存
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 彈出視窗 4：通用客製化確認 Modal -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[110] px-4 animate-in fade-in duration-200">
+      <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
+        <h3 id="confirm-modal-title" class="text-lg font-bold mb-2 text-[#5c4e37]">確認操作</h3>
+        <p id="confirm-modal-desc" class="text-xs text-[#8c816f] mb-6">您確定要執行此操作嗎？</p>
+        <div class="flex justify-end gap-2">
+          <button id="btn-confirm-cancel" onclick="closeCustomConfirm()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition">
+            取消
+          </button>
+          <button id="btn-confirm-submit" onclick="executeCustomConfirm()" class="px-4 py-2 text-sm font-medium text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition">
+            確定
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 圖片點擊放大預覽 Modal -->
+    <div id="image-zoom-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[120] p-4 cursor-zoom-out" onclick="closeImageZoom()">
+      <div class="relative max-w-3xl max-h-[90vh] flex flex-col items-center">
+        <img id="zoomed-image" src="" class="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border-4 border-white/10 animate-in zoom-in-95 duration-150">
+        <button class="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- 用於動態色號自動提示完成的 datalist -->
+    <datalist id="bead-options"></datalist>
+
+    <!-- 提示通知組件 -->
+    <div id="toast" class="fixed bottom-6 right-6 z-[200] transform translate-y-12 opacity-0 pointer-events-none transition-all duration-300 bg-[#5c4e37] text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2">
+      <i id="toast-icon" data-lucide="info" class="w-4 h-4 text-[#e2d5bd]"></i>
+      <span id="toast-message" class="text-sm font-medium">已成功執行操作</span>
+    </div>
+
+  </div>
+
+  <script>
+    // MARD 完整專屬色碼表
+    const colorMap = {
+      // A 紅黃粉橙系
+      'A1': '#FAF4C8', 'A2': '#FFFFD5', 'A3': '#FEFF8B', 'A4': '#FBED56', 'A5': '#F4D738', 'A6': '#FEAC4C', 'A7': '#FE8B4C', 'A8': '#FFDA45', 'A9': '#FF995B', 'A10': '#F77C31', 'A11': '#FFDD99', 'A12': '#FE9F72', 'A13': '#FFC365', 'A14': '#FD543D', 'A15': '#FFF365', 'A16': '#FFFF9F', 'A17': '#FFE36E', 'A18': '#FEBE7D', 'A19': '#FD7C72', 'A20': '#FFD568', 'A21': '#FFD67D', 'A22': '#F4F57D', 'A23': '#E6C9B7', 'A24': '#F7F8A2', 'A25': '#FFD67D', 'A26': '#FFC830',
+      // B 綠色與藍綠系
+      'B1': '#E6EE31', 'B2': '#63F347', 'B3': '#9EF780', 'B4': '#5DE035', 'B5': '#35E352', 'B6': '#65E2A6', 'B7': '#3DAF80', 'B8': '#1C9C4F', 'B9': '#27523A', 'B10': '#95D3C2', 'B11': '#5D722A', 'B12': '#166F41', 'B13': '#CAEB7B', 'B14': '#ADE946', 'B15': '#2E5132', 'B16': '#C5ED9C', 'B17': '#9BB13A', 'B18': '#E6EE49', 'B19': '#24B88C', 'B20': '#C2F0CC', 'B21': '#156A6B', 'B22': '#0B3C43', 'B23': '#303A21', 'B24': '#EEFCA5', 'B25': '#4E846D', 'B26': '#8D7A35', 'B27': '#CCE1AF', 'B28': '#9EE5B9', 'B29': '#C5E254', 'B30': '#E2FCB1', 'B31': '#B0E792', 'B32': '#9CAB5A',
+      // C 藍系與亮藍
+      'C1': '#E8FFE7', 'C2': '#A0E2FB', 'C3': '#A0E2FB', 'C4': '#41CCFF', 'C5': '#01ACEB', 'C6': '#50AAF0', 'C7': '#3677D2', 'C8': '#0F54C0', 'C9': '#324BCA', 'C10': '#3EBCE2', 'C11': '#28DDDE', 'C12': '#1C334D', 'C13': '#CDE8FF', 'C14': '#D5FDFF', 'C15': '#22C4C6', 'C16': '#1557A8', 'C17': '#04D1F6', 'C18': '#1D3344', 'C19': '#1887A2', 'C20': '#176DAF', 'C21': '#BEDDFF', 'C22': '#67B4BE', 'C23': '#C8E2FF', 'C24': '#7CC4FF', 'C25': '#A9E5E5', 'C26': '#3CAED8', 'C27': '#D3DFFA', 'C28': '#BBCFED', 'C29': '#34488E',
+      // D 紫色與紫紅
+      'D1': '#AEB4F2', 'D2': '#858EDD', 'D3': '#2F54AF', 'D4': '#182A84', 'D5': '#B843C5', 'D6': '#AC7BDE', 'D7': '#8854B3', 'D8': '#E2D3FF', 'D9': '#D5B9F8', 'D10': '#361B51', 'D11': '#B9BAE1', 'D12': '#DE9AD4', 'D13': '#B90095', 'D14': '#8B279B', 'D15': '#2F1F90', 'D16': '#E3E1EE', 'D17': '#C4D4F6', 'D18': '#A45EC7', 'D19': '#D8C3D7', 'D20': '#9C32B2', 'D21': '#9A009B', 'D22': '#333A95', 'D23': '#EBDAFC', 'D24': '#7786E5', 'D25': '#494FC7', 'D26': '#DFC2F8',
+      // E 粉嫩系
+      'E1': '#FDD3CC', 'E2': '#FEC0DF', 'E3': '#FFB7E7', 'E4': '#E8649E', 'E5': '#F551A2', 'E6': '#F13D74', 'E7': '#C63478', 'E8': '#FFDBE9', 'E9': '#E970CC', 'E10': '#D33793', 'E11': '#FCDDD2', 'E12': '#F78FC3', 'E13': '#B5006D', 'E14': '#FFD1BA', 'E15': '#F8C7C9', 'E16': '#FFF3EB', 'E17': '#FFE2EA', 'E18': '#FFC7DB', 'E19': '#FEBAD5', 'E20': '#D8C7D1', 'E21': '#BD9DA1', 'E22': '#B785A1', 'E23': '#937A8D', 'E24': '#E1BCE8',
+      // F 鮮紅與深紅
+      'F1': '#FD957B', 'F2': '#FC3D46', 'F3': '#F74941', 'F4': '#FC283C', 'F5': '#E7002F', 'F6': '#943630', 'F7': '#971937', 'F8': '#BC0028', 'F9': '#E2677A', 'F10': '#8A4526', 'F11': '#5A2121', 'F12': '#FD4E6A', 'F13': '#F35744', 'F14': '#FFA9AD', 'F15': '#D30022', 'F16': '#FEC2A6', 'F17': '#E69C79', 'F18': '#D37C46', 'F19': '#C1444A', 'F20': '#CD9391', 'F21': '#F7B4C6', 'F22': '#FDC0D0', 'F23': '#F67E66', 'F24': '#E698AA', 'F25': '#E54B4F',
+      // G 棕色、大地與膚色
+      'G1': '#FFE2CE', 'G2': '#FFC4AA', 'G3': '#F4C3A5', 'G4': '#E1B383', 'G5': '#EDB045', 'G6': '#E99C17', 'G7': '#9D5B3E', 'G8': '#753B32', 'G9': '#E6B483', 'G10': '#D98C39', 'G11': '#E0C593', 'G12': '#FFC890', 'G13': '#B7714A', 'G14': '#8D614C', 'G15': '#FCF9E0', 'G16': '#F2D9BA', 'G17': '#7B524B', 'G18': '#FFE4CC', 'G19': '#E07935', 'G20': '#A94023', 'G21': '#B88558',
+      // H 無彩色與特殊系
+      'H1': '#FDFBFF', 'H2': '#FEFFFF', 'H3': '#B6B1BA', 'H4': '#89858C', 'H5': '#48464E', 'H6': '#2F2B2F', 'H7': '#000000', 'H8': '#E7D6DB', 'H9': '#EDEDED', 'H10': '#EEE9EA', 'H11': '#CECDD5', 'H12': '#FFF5ED', 'H13': '#F5ECD2', 'H14': '#CFD7D3', 'H15': '#98A6A8', 'H16': '#1D1414', 'H17': '#F1EDED', 'H18': '#FFFDF0', 'H19': '#F6EFE2', 'H20': '#949FA3', 'H21': '#FFFBE1', 'Y22': '#CACAD4', 'H23': '#9A9D94',
+      // M 複合色
+      'M1': '#BCC6B8', 'M2': '#8AA386', 'M3': '#697D80', 'M4': '#E3D2BC', 'M5': '#D0CCAA', 'M6': '#B0A782', 'M7': '#B4A497', 'M8': '#B38281', 'M9': '#A58767', 'M10': '#C5B2BC', 'M11': '#9F7594', 'M12': '#644749', 'M13': '#D19066', 'M14': '#C77362', 'M15': '#757D7B',
+      // P 馬卡龍粉嫩
+      'P1': '#FCF7F8', 'P2': '#B0A9AC', 'P3': '#AFDCAB', 'P4': '#FEA49F', 'P5': '#EE8C3E', 'P6': '#5FD0A7', 'P7': '#EB9270', 'P8': '#F0D958', 'P9': '#D9D9D9', 'P10': '#D9C7EA', 'P11': '#F3ECC9', 'P12': '#E6EEF2', 'P13': '#AACBEF', 'P14': '#3376B0', 'P15': '#668575', 'P16': '#FEBF45', 'P17': '#FEA324', 'P18': '#FEB89F', 'P19': '#FFE0E9', 'P20': '#FEBECF', 'P21': '#ECBEBF', 'P22': '#E4A89F', 'P23': '#A56268',
+      // Q 馬卡龍色
+      'Q1': '#F2A5E8', 'Q2': '#E9EC91', 'Q3': '#FFFF00', 'Q4': '#FFEBFA', 'Q5': '#76CEDE',
+      // R 繽紛色
+      'R1': '#D50D21', 'R2': '#F92F83', 'R3': '#FD8324', 'R4': '#F8EC31', 'R5': '#35C75B', 'R6': '#23B891', 'R7': '#19779D', 'R8': '#1A60C3', 'R9': '#9A56B4', 'R10': '#FFDB4C', 'R11': '#FFEBFA', 'R12': '#D8D5CE', 'R13': '#55514C', 'R14': '#9FE4DF', 'R15': '#77CEE9', 'R16': '#3ECFCA', 'R17': '#4A867A', 'R18': '#7FCD9D', 'R19': '#CDE55D', 'R20': '#E8C7B4', 'R21': '#AD6F3C', 'R22': '#6C372F', 'R23': '#FEB872', 'R24': '#F3C1C0', 'R25': '#C9675E', 'R26': '#D293BE', 'R27': '#EA8CB1', 'R28': '#9C87D6',
+      // Y 粉嫩與螢光
+      'Y1': '#FD6FB4', 'Y2': '#FEB481', 'Y3': '#D7FAA0', 'Y4': '#8BDBFA', 'Y5': '#E987EA',
+      // ZG 夜光
+      'ZG1': '#DAABB3', 'ZG2': '#D6AA87', 'ZG3': '#C1BD8D', 'ZG4': '#96B69F', 'ZG5': '#849DC6', 'ZG6': '#94BFE2', 'ZG7': '#E2A9D2', 'ZG8': '#AB91C0'
+    };
+
+    // 淺色色號，文字改用 #8D877F 的名單
+    const lightCodes = new Set([
+      'A1', 'A2', 'A3', 'A4', 'A16', 'A22', 'A24',
+      'B24', 'B30', 'C1', 'C14', 'E16', 'G15', 'G18',
+      'H1', 'H2', 'H8', 'H9', 'H10', 'H11', 'H12', 'H13',
+      'F17', 'F18', 'F19', 'H17', 'H18', 'H19', 'H21', 'P1'
+    ]);
+
+    // 取得色號預設的 MARD 分類
+    function getBeadCategory(code) {
+      if (code.startsWith('ZG')) return 'ZG';
+      return code.charAt(0).toUpperCase();
+    }
+
+    // 取得色號預設名稱與子品牌規則
+    function getDefaultName(code, customRemark = '') {
+      if (customRemark.trim()) return customRemark.trim();
+      if (code === 'H1') return '透明';
+      if (code === 'H2') return '白色';
+      if (code === 'H7') return '黑色';
+
+      const category = getBeadCategory(code);
+      if (category === 'Y') return 'Mard夜光';
+      if (category === 'ZG') return 'Mard夜光';
+      if (category === 'P') return 'Mard珠光';
+      if (category === 'R') return 'Mard果凍';
+      if (category === 'Q') return 'Mard溫變';
+      return 'Mard';
+    }
+
+    // 拼豆數據庫初始化
+    function populateEmptyBeads() {
+      const sortedCodes = Object.keys(colorMap).sort((a, b) => {
+        const isAZG = a.startsWith('ZG');
+        const isBZG = b.startsWith('ZG');
+        if (isAZG && !isBZG) return 1;
+        if (!isAZG && isBZG) return -1;
+        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+      });
+
+      return sortedCodes.map(code => {
+        return {
+          code: code,
+          name: getDefaultName(code),
+          stock: 0,
+          pending: 0,
+          color: colorMap[code] || '#ffffff',
+          category: getBeadCategory(code)
+        };
+      });
+    }
+
+    // 內建示範圖紙
+    const initialPatternsData = {
+      'JELLYCAT標籤': [
+        { code: 'A7', req: 1 },
+        { code: 'A13', req: 3 },
+        { code: 'C10', req: 68 },
+        { code: 'H6', req: 17 },
+        { code: 'H2', req: 72 },
+        { code: 'D17', req: 6, altCodes: ['D11'] }
+      ]
+    };
+
+    // --- 系統狀態變數 ---
+    let beads = [];
+    let patterns = {};
+    let selectedCategory = 'ALL';
+    let viewMode = 'grid'; 
+    let selectedBeads = new Set();
+    let currentBatchActionType = 'consume'; 
+    let draftPatternBeads = []; 
+    let activePatternSelections = {};
+    let onConfirmCallback = null;
+    let editingBeadCode = null;
+    let editingPatternOldName = null;
+    let activeMobileTab = 'beads'; // 預設手機啟動在「色號」
+
+    // 相容舊資料與新結構的輔助函式
+    function getPatternRequirements(name) {
+      const pat = patterns[name];
+      if (!pat) return [];
+      return Array.isArray(pat) ? pat : (pat.requirements || []);
+    }
+
+    function getPatternImage(name) {
+      const pat = patterns[name];
+      if (!pat || Array.isArray(pat)) return '';
+      return pat.image || '';
+    }
+
+    let draftPatternImage = ''; // 儲存當前新增/修改上傳的圖紙 base64 影像字串
+
+    // --- STREAMING_CHUNK:Loading user data and storage hook... ---
+    // 啟動與自動加載
+    window.onload = function() {
+      lucide.createIcons();
+      
+      const savedBeads = localStorage.getItem('mard_beads_data');
+      const savedPatterns = localStorage.getItem('mard_patterns_data');
+      
+      if (savedBeads) {
+        beads = JSON.parse(savedBeads);
+        // 清理殘留的 T1 髒數據
+        beads = beads.filter(b => b.code !== 'T1');
+        fillMissingMARDCodes();
+      } else {
+        beads = populateEmptyBeads();
+      }
+
+      // 同步子品項預設值與分類
+      beads.forEach(b => {
+        if (!b.category) {
+          b.category = getBeadCategory(b.code);
+        }
+        if (!b.name || b.name === b.code || b.name === 'Mard') {
+          b.name = getDefaultName(b.code);
+        }
+      });
+      saveData();
+
+      if (savedPatterns) {
+        patterns = JSON.parse(savedPatterns);
+        // 將舊版本陣列格式的圖紙自動升級至物件格式
+        Object.keys(patterns).forEach(name => {
+          if (Array.isArray(patterns[name])) {
+            patterns[name] = {
+              requirements: patterns[name],
+              image: ''
+            };
+          }
+        });
+      } else {
+        // 初始化格式化資料結構
+        patterns = {};
+        Object.keys(initialPatternsData).forEach(name => {
+          patterns[name] = {
+            requirements: initialPatternsData[name],
+            image: ''
+          };
+        });
+      }
+
+      renderCategoryTabs();
+      renderBeads();
+      renderStats();
+      renderPendingList();
+      populatePatternSelector();
+      resetPatternSelections();
+      renderPatternRequirements();
+      setupDatalistOptions();
+
+      // 初始化手機分頁切換
+      switchMobileTab('beads');
+    };
+
+    function fillMissingMARDCodes() {
+      const existingCodes = new Set(beads.map(b => b.code));
+      Object.keys(colorMap).forEach(code => {
+        if (!existingCodes.has(code)) {
+          beads.push({
+            code: code,
+            name: getDefaultName(code),
+            stock: 0,
+            pending: 0,
+            color: colorMap[code],
+            category: getBeadCategory(code)
+          });
+        }
+      });
+      // 依英文字母與色號分類完美排序
+      beads.sort((a, b) => {
+        const isAZG = a.code.startsWith('ZG');
+        const isBZG = b.code.startsWith('ZG');
+        if (isAZG && !isBZG) return 1;
+        if (!isAZG && isBZG) return -1;
+        return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+      });
+      saveData();
+    }
+
+    function saveData() {
+      localStorage.setItem('mard_beads_data', JSON.stringify(beads));
+      localStorage.setItem('mard_patterns_data', JSON.stringify(patterns));
+    }
+
+    // --- STREAMING_CHUNK:Defining selection logic and mobile tab switcher... ---
+    // 手機底欄分頁控制切換邏輯
+    function switchMobileTab(tab) {
+      activeMobileTab = tab;
+
+      const restockEl = document.getElementById('mobile-tab-restock');
+      const beadsEl = document.getElementById('mobile-tab-beads');
+      const patternsEl = document.getElementById('mobile-tab-patterns');
+
+      const btnRestock = document.getElementById('tab-btn-restock');
+      const btnBeads = document.getElementById('tab-btn-beads');
+      const btnPatterns = document.getElementById('tab-btn-patterns');
+
+      // 重設手機隱藏與顯示，電腦版會自動利用 lg:flex 還原並排
+      restockEl.classList.add('hidden');
+      restockEl.classList.remove('flex');
+      beadsEl.classList.add('hidden');
+      beadsEl.classList.remove('flex');
+      patternsEl.classList.add('hidden');
+      patternsEl.classList.remove('flex');
+
+      if (tab === 'restock') {
+        restockEl.classList.remove('hidden');
+        restockEl.classList.add('flex');
+      } else if (tab === 'beads') {
+        beadsEl.classList.remove('hidden');
+        beadsEl.classList.add('flex');
+      } else if (tab === 'patterns') {
+        patternsEl.classList.remove('hidden');
+        patternsEl.classList.add('flex');
+      }
+
+      // 按鈕激活奶油色高亮風格
+      const inactiveClass = "text-[#8c816f] bg-transparent";
+      const activeClass = "text-[#5c4e37] bg-[#efe2c9]/65 shadow-md shadow-[#5c4e37]/5 scale-105 font-bold";
+
+      btnRestock.className = `flex flex-col items-center gap-1 px-5 py-2 rounded-2xl transition-all ${tab === 'restock' ? activeClass : inactiveClass}`;
+      btnBeads.className = `flex flex-col items-center gap-1 px-5 py-2 rounded-2xl transition-all ${tab === 'beads' ? activeClass : inactiveClass}`;
+      btnPatterns.className = `flex flex-col items-center gap-1 px-5 py-2 rounded-2xl transition-all ${tab === 'patterns' ? activeClass : inactiveClass}`;
+
+      // 重新渲染 Lucide 圖示色彩與大小
+      lucide.createIcons();
+    }
+
+    function selectCategory(cat) {
+      selectedCategory = cat;
+      renderCategoryTabs();
+      renderBeads();
+    }
+
+    // 更新儀表板統計
+    function renderStats() {
+      document.getElementById('stat-total-colors').innerText = beads.length;
+      
+      const totalBeads = beads.reduce((acc, curr) => acc + (curr.stock || 0), 0);
+      document.getElementById('stat-total-beads').innerText = totalBeads.toLocaleString();
+
+      const pendingTypes = beads.filter(b => b.pending > 0).length;
+      document.getElementById('stat-pending-types').innerText = pendingTypes;
+
+      const outOfStock = beads.filter(b => b.stock === 0).length;
+      document.getElementById('stat-out-of-stock').innerText = outOfStock;
+    }
+
+    // 自定義彈窗代替 window.confirm
+    function showCustomConfirm(title, desc, onConfirm) {
+      document.getElementById('confirm-modal-title').innerText = title;
+      document.getElementById('confirm-modal-desc').innerText = desc;
+      onConfirmCallback = onConfirm;
+      document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
+    function closeCustomConfirm() {
+      document.getElementById('confirm-modal').classList.add('hidden');
+      onConfirmCallback = null;
+    }
+
+    function executeCustomConfirm() {
+      if (onConfirmCallback) onConfirmCallback();
+      closeCustomConfirm();
+    }
+
+    // 渲染 A-Z 排列的分類導航
+    function renderCategoryTabs() {
+      const uniqueCats = Array.from(new Set(beads.map(b => b.category || getBeadCategory(b.code))));
+      uniqueCats.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+      const categories = ['ALL', ...uniqueCats];
+      const tabsContainer = document.getElementById('category-tabs');
+      tabsContainer.innerHTML = '';
+
+      categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.onclick = () => selectCategory(cat);
+        btn.className = `px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
+          selectedCategory === cat 
+            ? 'bg-[#cf9d67] text-white shadow-md shadow-[#cf9d67]/10' 
+            : 'bg-[#faf7f0] hover:bg-[#ede3cf]/60 text-[#7c6a52] border border-[#ede3cf]/60'
+        }`;
+        btn.innerText = cat === 'ALL' ? '全部 MARD' : cat;
+        tabsContainer.appendChild(btn);
+      });
+    }
+
+    // 決定字體顏色 (白字 #ffffff / 黑字 #8D877F)
+    function getContrastColor(bead) {
+      if (bead.textColor === '#8D877F' || bead.textColor === '#ffffff') {
+        return bead.textColor;
+      }
+      if (lightCodes.has(bead.code)) {
+        return '#8D877F';
+      }
+      return '#ffffff';
+    }
+
+    // --- STREAMING_CHUNK:Rendering card views and styling inputs... ---
+    // 渲染主畫面色號清單
+    function renderBeads() {
+      const container = document.getElementById('beads-container');
+      container.innerHTML = '';
+
+      const searchVal = document.getElementById('search-input').value.toLowerCase().trim();
+      const stockFilter = document.getElementById('stock-filter').value;
+
+      let filtered = beads.filter(bead => {
+        if (selectedCategory !== 'ALL') {
+          if (bead.category !== selectedCategory) return false;
+        }
+
+        if (searchVal) {
+          const matchCode = bead.code.toLowerCase().includes(searchVal);
+          const matchName = bead.name.toLowerCase().includes(searchVal);
+          if (!matchCode && !matchName) return false;
+        }
+
+        if (stockFilter === 'instock' && bead.stock <= 0) return false;
+        if (stockFilter === 'lowstock' && (bead.stock <= 0 || bead.stock >= 500)) return false;
+        if (stockFilter === 'outofstock' && bead.stock > 0) return false;
+        if (stockFilter === 'haspending' && bead.pending <= 0) return false;
+
+        return true;
+      });
+
+      if (viewMode === 'grid') {
+        container.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 flex-grow content-start";
+      } else {
+        container.className = "flex flex-col gap-2.5 flex-grow content-start";
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-12 flex flex-col items-center justify-center text-slate-400 gap-2 bg-white rounded-3xl border border-[#ede3cf]/40">
+            <i data-lucide="inbox" class="w-12 h-12 stroke-1 text-[#8c816f]"></i>
+            <span class="text-sm text-[#8c816f]/80">未找到符合篩選的拼豆色號</span>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      filtered.forEach(bead => {
+        const isSelected = selectedBeads.has(bead.code);
+        const textColor = getContrastColor(bead);
+        const cardStyle = `background-color: ${bead.color}; color: ${textColor}; border-color: ${textColor}22;`;
+
+        if (viewMode === 'grid') {
+          const card = document.createElement('div');
+          card.className = `relative rounded-3xl p-4 shadow-sm transition-all duration-200 border-2 ${
+            isSelected ? 'border-[#cf9d67] ring-4 ring-[#cf9d67]/10 scale-[1.01]' : 'hover:shadow-md'
+          } flex flex-col justify-between min-h-[225px] h-auto cursor-pointer group`;
+          card.style = cardStyle;
+          
+          card.onclick = () => {
+            toggleBeadSelection(bead.code);
+          };
+
+          card.innerHTML = `
+            <div class="flex justify-between items-start">
+              <div class="flex flex-col">
+                <span class="text-lg font-black tracking-wide">${bead.code}</span>
+                <span class="text-[10px] opacity-75 truncate max-w-[120px]">${bead.name}</span>
+              </div>
+              <div class="flex gap-1 items-center">
+                <button onclick="event.stopPropagation(); openBeadModal('${bead.code}')" class="p-1 rounded-lg bg-white/20 hover:bg-white/40 transition opacity-0 group-hover:opacity-100" title="修改或刪除色號">
+                  <i data-lucide="edit-3" class="w-3.5 h-3.5" style="color: ${textColor}"></i>
+                </button>
+                <div class="w-5 h-5 rounded-md border flex items-center justify-center ${isSelected ? 'bg-[#cf9d67] border-[#cf9d67]' : 'border-current/40 bg-white/10'}" onclick="event.stopPropagation(); toggleBeadSelection('${bead.code}')">
+                  ${isSelected ? '<i data-lucide="check" class="w-3 h-3 text-white"></i>' : ''}
+                </div>
+              </div>
+            </div>
+
+            <div class="my-2.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
+              <span class="text-2xl font-black">${bead.stock}</span>
+              <span class="text-[10px] opacity-80 mr-1">顆</span>
+              ${bead.pending > 0 ? `
+                <span class="bg-[#cf9d67] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md animate-pulse whitespace-nowrap">
+                  待補: +${bead.pending}
+                </span>
+              ` : ''}
+            </div>
+
+            <div class="space-y-1.5 mt-auto" onclick="event.stopPropagation();">
+              <!-- 消耗輸入框 (按鈕優雅白底黑字) -->
+              <div class="flex items-center gap-1 bg-white/20 p-1 rounded-xl border" style="border-color: ${textColor}33;">
+                <button onclick="adjustStock('${bead.code}', -100)" class="w-6 h-6 rounded-lg bg-white/15 hover:bg-white/30 text-xs flex items-center justify-center font-bold">-</button>
+                <input type="number" id="consume-val-${bead.code}" placeholder="消耗數量" class="w-full bg-transparent text-center text-xs focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold" style="color: ${textColor};" onkeydown="handleQuickAction(event, '${bead.code}', 'consume')">
+                <button onclick="submitConsume('${bead.code}')" class="text-[10px] bg-white text-[#4a453e] font-bold px-1.5 py-1 rounded-lg hover:bg-slate-100 transition shadow-sm">消耗</button>
+              </div>
+
+              <!-- 補貨輸入框 (按鈕優雅白底黑字) -->
+              <div class="flex items-center gap-1 bg-black/10 p-1 rounded-xl border" style="border-color: ${textColor}15;">
+                <input type="number" id="restock-val-${bead.code}" placeholder="補貨數量" class="w-full bg-transparent text-center text-xs focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold" style="color: ${textColor};" onkeydown="handleQuickAction(event, '${bead.code}', 'restock')">
+                <button onclick="submitRestock('${bead.code}')" class="text-[10px] bg-white text-[#4a453e] font-bold px-1.5 py-1 rounded-lg hover:bg-slate-100 transition shadow-sm">補貨</button>
+              </div>
+            </div>
+          `;
+          container.appendChild(card);
+        } else {
+          const row = document.createElement('div');
+          row.className = `flex flex-col sm:flex-row justify-between items-stretch sm:items-center p-3 rounded-2xl border transition-all group ${
+            isSelected ? 'border-[#cf9d67] bg-[#fdfaf2]' : 'border-[#ede3cf]/40 bg-white hover:bg-[#faf7f0]'
+          } gap-3 cursor-pointer`;
+          row.onclick = () => toggleBeadSelection(bead.code);
+
+          row.innerHTML = `
+            <div class="flex items-center gap-3 min-w-[150px]">
+              <div class="w-5 h-5 rounded-md border flex items-center justify-center ${isSelected ? 'bg-[#cf9d67] border-[#cf9d67]' : 'bg-white border-slate-300'}" onclick="event.stopPropagation(); toggleBeadSelection('${bead.code}')">
+                ${isSelected ? '<i data-lucide="check" class="w-3 h-3 text-white"></i>' : ''}
+              </div>
+              <div class="w-8 h-8 rounded-full shadow-inner border border-[#ede3cf]/60 relative overflow-hidden flex items-center justify-center" style="background-color: ${bead.color}">
+                 <button onclick="event.stopPropagation(); openBeadModal('${bead.code}')" class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition" title="修改或刪除">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5 text-white"></i>
+                 </button>
+              </div>
+              <div>
+                <span class="font-black text-[#5c4e37]">${bead.code}</span>
+                <span class="text-xs text-[#8c816f] block">${bead.name}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-4 px-2" onclick="event.stopPropagation();">
+              <div>
+                <span class="text-[10px] text-slate-400 block">庫存總數</span>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="adjustStock('${bead.code}', -100)" class="w-5 h-5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded flex items-center justify-center font-bold">-</button>
+                  <span class="font-bold text-slate-800 text-sm min-w-[45px] text-center">${bead.stock}</span>
+                  <button onclick="adjustStock('${bead.code}', 100)" class="w-5 h-5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded flex items-center justify-center font-bold">+</button>
+                </div>
+              </div>
+
+              ${bead.pending > 0 ? `
+                <div class="bg-amber-50 border border-amber-200 rounded-xl px-2 py-0.5 flex items-center gap-1.5">
+                  <div>
+                    <span class="text-[9px] text-amber-500 block font-bold">待補貨數</span>
+                    <span class="text-xs font-black text-amber-700">+${bead.pending}</span>
+                  </div>
+                  <button onclick="confirmSingleRestock('${bead.code}')" class="bg-[#cf9d67] hover:bg-[#bc8954] text-white text-[10px] px-1.5 py-0.5 rounded transition font-medium">點收</button>
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="flex items-center gap-2 sm:ml-auto" onclick="event.stopPropagation();">
+              <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-1 w-28">
+                <input type="number" id="consume-val-list-${bead.code}" placeholder="消耗" class="w-full bg-transparent text-center text-xs focus:outline-none font-bold">
+                <button onclick="submitConsume('${bead.code}', true)" class="text-[10px] bg-slate-800 text-white px-2 py-1 rounded-lg hover:bg-slate-700 transition">送出</button>
+              </div>
+
+              <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-1 w-28">
+                <input type="number" id="restock-val-list-${bead.code}" placeholder="補貨" class="w-full bg-transparent text-center text-xs focus:outline-none font-bold">
+                <button onclick="submitRestock('${bead.code}', true)" class="text-[10px] bg-[#cf9d67] text-white px-2 py-1 rounded-lg hover:bg-[#bc8954] transition">補貨</button>
+              </div>
+            </div>
+          `;
+          container.appendChild(row);
+        }
+      });
+
+      lucide.createIcons();
+    }
+
+    // --- STREAMING_CHUNK:Executing dynamic inventory actions... ---
+    // 色號多選切換
+    function toggleBeadSelection(code) {
+      if (selectedBeads.has(code)) {
+        selectedBeads.delete(code);
+      } else {
+        selectedBeads.add(code);
+      }
+      renderBatchBar();
+      renderBeads();
+    }
+
+    function clearBatchSelection() {
+      selectedBeads.clear();
+      renderBatchBar();
+      renderBeads();
+    }
+
+    function renderBatchBar() {
+      const bar = document.getElementById('batch-bar');
+      const countSpan = document.getElementById('batch-count');
+      if (selectedBeads.size > 0) {
+        bar.classList.remove('hidden');
+        countSpan.innerText = selectedBeads.size;
+      } else {
+        bar.classList.add('hidden');
+      }
+    }
+
+    function filterBeads() {
+      renderBeads();
+    }
+
+    function setViewMode(mode) {
+      viewMode = mode;
+      document.getElementById('btn-view-grid').className = mode === 'grid' ? 'p-1.5 rounded-lg text-[#5c4e37] bg-white shadow-sm transition' : 'p-1.5 rounded-lg text-[#5c4e37] transition';
+      document.getElementById('btn-view-list').className = mode === 'list' ? 'p-1.5 rounded-lg text-[#5c4e37] bg-white shadow-sm transition' : 'p-1.5 rounded-lg text-[#5c4e37] transition';
+      renderBeads();
+    }
+
+    function handleQuickAction(e, code, type) {
+      if (e.key === 'Enter') {
+        if (type === 'consume') {
+          submitConsume(code);
+        } else if (type === 'restock') {
+          submitRestock(code);
+        }
+      }
+    }
+
+    function adjustStock(code, amount) {
+      const b = beads.find(x => x.code === code);
+      if (b) {
+        b.stock = Math.max(0, b.stock + amount);
+        saveData();
+        renderBeads();
+        renderStats();
+        renderPatternRequirements();
+        showToast(`${code} 庫存已調整為 ${b.stock}`);
+      }
+    }
+
+    function submitConsume(code, isList = false) {
+      const inputId = isList ? `consume-val-list-${code}` : `consume-val-${code}`;
+      const input = document.getElementById(inputId);
+      const val = parseInt(input.value);
+      if (isNaN(val) || val <= 0) {
+        showToast('請輸入正確的消耗數量', 'alert');
+        return;
+      }
+
+      const b = beads.find(x => x.code === code);
+      if (b) {
+        if (b.stock < val) {
+          showToast(`庫存不足！現有 ${b.stock}，欲消耗 ${val}`, 'alert');
+          return;
+        }
+        b.stock -= val;
+        input.value = '';
+        saveData();
+        renderBeads();
+        renderStats();
+        renderPatternRequirements();
+        showToast(`${code} 成功消耗 ${val} 顆`);
+      }
+    }
+
+    function submitRestock(code, isList = false) {
+      const inputId = isList ? `restock-val-list-${code}` : `restock-val-${code}`;
+      const input = document.getElementById(inputId);
+      const val = parseInt(input.value);
+      if (isNaN(val) || val <= 0) {
+        showToast('請輸入正確的補貨數量', 'alert');
+        return;
+      }
+
+      const b = beads.find(x => x.code === code);
+      if (b) {
+        b.pending += val; 
+        input.value = '';
+        saveData();
+        renderBeads();
+        renderStats();
+        renderPendingList();
+        showToast(`${code} 已登記補貨 ${val} 顆 (待點收確認)`);
+      }
+    }
+
+    function confirmSingleRestock(code) {
+      const b = beads.find(x => x.code === code);
+      if (b && b.pending > 0) {
+        b.stock += b.pending;
+        const added = b.pending;
+        b.pending = 0; 
+        saveData();
+        renderBeads();
+        renderStats();
+        renderPendingList();
+        renderPatternRequirements();
+        showToast(`${code} 已確認點收補貨 ${added} 顆，庫存已更新！`);
+      }
+    }
+
+    function cancelSingleRestock(code) {
+      const b = beads.find(x => x.code === code);
+      if (b && b.pending > 0) {
+        const cancelledAmount = b.pending;
+        b.pending = 0;
+        saveData();
+        renderBeads();
+        renderStats();
+        renderPendingList();
+        showToast(`已成功移除 ${code} 的待點收補貨登記 (${cancelledAmount} 顆)`);
+      }
+    }
+
+    // --- STREAMING_CHUNK:Managing restocks and matching formulas... ---
+    function renderPendingList() {
+      const container = document.getElementById('pending-restock-list');
+      container.innerHTML = '';
+      
+      const pendingItems = beads.filter(b => b.pending > 0);
+      
+      if (pendingItems.length === 0) {
+        container.innerHTML = `
+          <div class="py-6 text-center text-[#8c816f]/60 text-xs border border-dashed border-[#ede3cf] rounded-2xl">
+            目前無待確認的補貨品項
+          </div>
+        `;
+        return;
+      }
+
+      pendingItems.forEach(b => {
+        const item = document.createElement('div');
+        item.className = "flex items-center justify-between p-2.5 bg-[#faf7f0] border border-[#ede3cf]/60 rounded-xl text-xs shadow-sm";
+        item.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${b.color}"></span>
+            <span class="font-bold text-[#5c4e37]">${b.code}</span>
+            <span class="text-[#8c816f]">庫存: ${b.stock}</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="bg-[#f2ebd9] text-[#7c6a52] font-black px-1.5 py-0.5 rounded">待確認: +${b.pending}</span>
+            <button onclick="confirmSingleRestock('${b.code}')" class="text-white bg-[#cf9d67] hover:bg-[#bc8954] p-1.5 rounded-lg transition" title="確認點收併入庫存">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="cancelSingleRestock('${b.code}')" class="text-white bg-[#e49b8c] hover:bg-[#db8978] p-1.5 rounded-lg transition" title="取消移除此補貨登記">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+
+      lucide.createIcons();
+    }
+
+    function confirmAllRestock() {
+      const pendingItems = beads.filter(b => b.pending > 0);
+      if (pendingItems.length === 0) {
+        showToast('目前沒有待補貨的項目', 'info');
+        return;
+      }
+      
+      pendingItems.forEach(b => {
+        b.stock += b.pending;
+        b.pending = 0;
+      });
+
+      saveData();
+      renderBeads();
+      renderStats();
+      renderPendingList();
+      renderPatternRequirements();
+      showToast('所有待補貨色號已成功點收併入庫存！');
+    }
+
+    // --- STREAMING_CHUNK:Configuring custom patterns and recipe matching... ---
+    // 渲染圖紙選擇下拉選單
+    function populatePatternSelector() {
+      const selector = document.getElementById('pattern-selector');
+      selector.innerHTML = '';
+      
+      Object.keys(patterns).forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.innerText = name;
+        selector.appendChild(opt);
+      });
+    }
+
+    function resetPatternSelections() {
+      activePatternSelections = {};
+      const selector = document.getElementById('pattern-selector');
+      const patternName = selector.value;
+      if (patternName && patterns[patternName]) {
+        const requirements = getPatternRequirements(patternName);
+        requirements.forEach(req => {
+          activePatternSelections[req.code] = req.code; 
+        });
+      }
+    }
+
+    function selectActiveCode(mainCode, chosenCode) {
+      activePatternSelections[mainCode] = chosenCode;
+      renderPatternRequirements();
+    }
+
+    // 渲染當前圖紙所需拼豆與補貨充足狀態
+    function renderPatternRequirements() {
+      const selector = document.getElementById('pattern-selector');
+      const list = document.getElementById('pattern-requirements-list');
+      const btn = document.getElementById('btn-deduct-pattern');
+      
+      list.innerHTML = '';
+      
+      const patternName = selector.value;
+
+      // 載入及預覽圖紙上傳的圖片
+      const imgContainer = document.getElementById('pattern-image-container');
+      const previewImg = document.getElementById('pattern-preview-img');
+      const downloadBtn = document.getElementById('pattern-download-btn');
+      const imgData = getPatternImage(patternName);
+
+      if (imgData) {
+        imgContainer.classList.remove('hidden');
+        previewImg.src = imgData;
+        downloadBtn.href = imgData;
+        downloadBtn.setAttribute('download', `${patternName}_參考圖.png`);
+      } else {
+        imgContainer.classList.add('hidden');
+      }
+
+      if (!patternName || !patterns[patternName]) {
+        list.innerHTML = `<div class="text-center py-6 text-xs text-[#8c816f]/60">目前尚無規劃的圖紙</div>`;
+        btn.disabled = true;
+        btn.className = "w-full bg-slate-200 text-slate-400 font-medium text-sm py-2.5 rounded-xl cursor-not-allowed flex items-center justify-center gap-1";
+        return;
+      }
+
+      const requirements = getPatternRequirements(patternName);
+      let canCraft = true;
+
+      requirements.forEach(req => {
+        const allOptions = [req.code, ...(req.altCodes || [])];
+        
+        if (!activePatternSelections[req.code]) {
+          activePatternSelections[req.code] = req.code;
+        }
+        
+        const currentlyChosen = activePatternSelections[req.code];
+        const chosenBead = beads.find(b => b.code === currentlyChosen);
+        const chosenStock = chosenBead ? chosenBead.stock : 0;
+        const isSufficient = chosenStock >= req.req;
+        
+        if (!isSufficient) {
+          canCraft = false;
+        }
+
+        const item = document.createElement('div');
+        item.className = `flex flex-col p-3 rounded-2xl text-xs gap-2 ${
+          isSufficient ? 'bg-[#f4fcf6] border border-green-100' : 'bg-[#fff5f2] border border-rose-100 text-[#a35144]'
+        }`;
+
+        let toggleButtonsHTML = '';
+        allOptions.forEach(optCode => {
+          const optBead = beads.find(b => b.code === optCode);
+          const optStock = optBead ? optBead.stock : 0;
+          const isActive = currentlyChosen === optCode;
+          
+          toggleButtonsHTML += `
+            <button onclick="selectActiveCode('${req.code}', '${optCode}')" 
+              class="px-2 py-1 rounded-lg border text-[10px] font-bold transition-all flex items-center gap-1 ${
+                isActive 
+                  ? 'bg-[#cf9d67] border-[#cf9d67] text-white shadow-sm' 
+                  : 'bg-white border-[#ede3cf] text-[#7c6a52] hover:bg-[#faf7f0]'
+              }">
+              <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${optBead ? optBead.color : '#ccc'}"></span>
+              ${optCode === req.code ? '' : ''}${optCode} (${optStock}顆)
+            </button>
+          `;
+        });
+
+        item.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-full border border-slate-200" style="background-color: ${chosenBead ? chosenBead.color : '#cccccc'}"></span>
+              <span class="font-bold text-[#4a453e]"> ${req.code}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[#8c816f]">需 <b class="text-[#4a453e]">${req.req}</b> 顆</span>
+              <span class="flex items-center gap-1">
+                ${isSufficient ? '<span class="text-green-600 font-bold">充足</span><i data-lucide="check-circle" class="w-3.5 h-3.5 text-green-500"></i>' : '<span class="text-rose-600 font-bold">缺貨</span><i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-rose-500"></i>'}
+              </span>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5 pt-1 border-t border-[#ede3cf]/40">
+            ${toggleButtonsHTML}
+          </div>
+        `;
+        list.appendChild(item);
+      });
+
+      if (canCraft) {
+        btn.disabled = false;
+        btn.className = "w-full bg-[#bf9e74] hover:bg-[#af8d63] text-white font-bold text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm";
+      } else {
+        btn.disabled = true;
+        btn.className = "w-full bg-[#ede6d9] text-[#bcaaa4] font-semibold text-sm py-2.5 rounded-xl cursor-not-allowed flex items-center justify-center gap-1";
+      }
+
+      lucide.createIcons();
+    }
+
+    function deductPatternStock() {
+      const selector = document.getElementById('pattern-selector');
+      const patternName = selector.value;
+      if (!patternName || !patterns[patternName]) return;
+
+      const requirements = getPatternRequirements(patternName);
+      let canCraft = true;
+      requirements.forEach(req => {
+        const currentlyChosen = activePatternSelections[req.code] || req.code;
+        const bead = beads.find(b => b.code === currentlyChosen);
+        const currentStock = bead ? bead.stock : 0;
+
+        if (currentStock < req.req) {
+          canCraft = false;
+        }
+      });
+
+      if (!canCraft) {
+        showToast('選定的色號庫存不足，無法製作！', 'alert');
+        return;
+      }
+
+      requirements.forEach(req => {
+        const currentlyChosen = activePatternSelections[req.code] || req.code;
+        const bead = beads.find(b => b.code === currentlyChosen);
+        if (bead) {
+          bead.stock -= req.req;
+        }
+      });
+
+      saveData();
+      renderBeads();
+      renderStats();
+      renderPatternRequirements();
+      showToast(`成功製作圖紙「${patternName}」，已扣除選定色號的庫存！`);
+    }
+
+    function deleteCurrentPattern() {
+      const selector = document.getElementById('pattern-selector');
+      const name = selector.value;
+      if (!name) return;
+
+      showCustomConfirm(
+        '刪除圖紙確認',
+        `確定要刪除「${name}」圖紙嗎？這個動作將無法復原。`,
+        () => {
+          delete patterns[name];
+          saveData();
+          populatePatternSelector();
+          resetPatternSelections();
+          renderPatternRequirements();
+          showToast(`已成功移除圖紙 ${name}`);
+        }
+      );
+    }
+
+    // 進入圖紙建立介面
+    function openPatternCreator() {
+      editingPatternOldName = null;
+      draftPatternBeads = [];
+      draftPatternImage = '';
+      document.getElementById('new-pattern-name').value = '';
+      document.getElementById('pattern-item-search').value = '';
+      document.getElementById('pattern-item-alt').value = '';
+      document.getElementById('pattern-item-qty').value = '';
+      
+      // 重置圖片上傳介面
+      document.getElementById('creator-image-preview-wrapper').classList.add('hidden');
+      document.getElementById('creator-image-preview').src = '';
+      document.getElementById('creator-image-status').innerText = '尚未選擇圖片';
+      document.getElementById('pattern-image-input').value = '';
+
+      renderPatternDraftList();
+      document.getElementById('pattern-modal').classList.remove('hidden');
+    }
+
+    // 進入圖紙修改模式 (將既有需求載入草稿)
+    function editCurrentPattern() {
+      const selector = document.getElementById('pattern-selector');
+      const name = selector.value;
+      if (!name || !patterns[name]) return;
+      
+      editingPatternOldName = name;
+      draftPatternBeads = JSON.parse(JSON.stringify(getPatternRequirements(name)));
+      draftPatternImage = getPatternImage(name) || '';
+      
+      document.getElementById('new-pattern-name').value = name;
+      document.getElementById('pattern-item-search').value = '';
+      document.getElementById('pattern-item-alt').value = '';
+      document.getElementById('pattern-item-qty').value = '';
+      document.getElementById('pattern-image-input').value = '';
+
+      // 設定圖片編輯狀態
+      const previewWrapper = document.getElementById('creator-image-preview-wrapper');
+      const previewImg = document.getElementById('creator-image-preview');
+      const statusText = document.getElementById('creator-image-status');
+      
+      if (draftPatternImage) {
+        previewWrapper.classList.remove('hidden');
+        previewImg.src = draftPatternImage;
+        statusText.innerText = '已載入現有圖片';
+      } else {
+        previewWrapper.classList.add('hidden');
+        previewImg.src = '';
+        statusText.innerText = '尚未選擇圖片';
+      }
+      
+      renderPatternDraftList();
+      document.getElementById('pattern-modal').classList.remove('hidden');
+    }
+
+    function closePatternCreator() {
+      document.getElementById('pattern-modal').classList.add('hidden');
+    }
+
+    function setupDatalistOptions() {
+      const datalist = document.getElementById('bead-options');
+      datalist.innerHTML = '';
+      beads.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.code;
+        opt.innerText = b.name !== b.code ? `${b.code} (${b.name})` : b.code;
+        datalist.appendChild(opt);
+      });
+    }
+
+    function addBeadToDraftPattern() {
+      const searchInput = document.getElementById('pattern-item-search');
+      const altInput = document.getElementById('pattern-item-alt');
+      const qtyInput = document.getElementById('pattern-item-qty');
+      
+      const code = searchInput.value.trim().toUpperCase();
+      const rawAlts = altInput.value.trim();
+      const qty = parseInt(qtyInput.value);
+
+      if (!code) {
+        showToast('請輸入拼豆主色號', 'alert');
+        return;
+      }
+
+      const exist = beads.some(b => b.code === code);
+      if (!exist) {
+        showToast(`注意：色號表無主色號「${code}」，已為您強制加入需求！`, 'info');
+      }
+
+      let altCodes = [];
+      if (rawAlts) {
+        altCodes = rawAlts.split(',')
+                          .map(s => s.trim().toUpperCase())
+                          .filter(s => s !== '');
+        
+        for (let alt of altCodes) {
+          const altExist = beads.some(b => b.code === alt);
+          if (!altExist) {
+            showToast(`注意：色號表無替代色號「${alt}」，已為您強制加入需求！`, 'info');
+          }
+          if (code === alt) {
+            showToast('替代色號不能與主色號相同', 'alert');
+            return;
+          }
+        }
+      }
+
+      if (isNaN(qty) || qty <= 0) {
+        showToast('請輸入正確的需求數量', 'alert');
+        return;
+      }
+
+      const existDraftItem = draftPatternBeads.find(item => item.code === code);
+      if (existDraftItem) {
+        existDraftItem.req += qty;
+        if (altCodes.length > 0) {
+          existDraftItem.altCodes = Array.from(new Set([...(existDraftItem.altCodes || []), ...altCodes]));
+        }
+      } else {
+        draftPatternBeads.push({ 
+          code, 
+          req: qty, 
+          altCodes: altCodes.length > 0 ? altCodes : undefined 
+        });
+      }
+
+      searchInput.value = '';
+      altInput.value = '';
+      qtyInput.value = '';
+      
+      renderPatternDraftList();
+      showToast(`已加入草稿: ${code} ${altCodes.length > 0 ? `(可代: ${altCodes.join(', ')})` : ''} x ${qty}`);
+    }
+
+    function renderPatternDraftList() {
+      const container = document.getElementById('pattern-draft-list');
+      container.innerHTML = '';
+
+      if (draftPatternBeads.length === 0) {
+        container.innerHTML = `<div class="text-center py-6 text-xs text-[#8c816f]/60">目前無色號，請於上方新增</div>`;
+        return;
+      }
+
+      draftPatternBeads.forEach((item, index) => {
+        const beadInfo = beads.find(b => b.code === item.code);
+        const color = beadInfo ? beadInfo.color : '#cccccc';
+
+        const row = document.createElement('div');
+        row.className = "flex items-center justify-between p-1.5 bg-slate-50 rounded-xl border border-slate-100 text-xs";
+        
+        const altText = item.altCodes && item.altCodes.length > 0 
+          ? `<span class="bg-[#efe2c9] text-[#7c6a52] px-1.5 py-0.5 rounded text-[10px] scale-95 origin-left">代: ${item.altCodes.join(', ')}</span>` 
+          : '';
+
+        row.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-slate-300" style="background-color: ${color}"></span>
+            <span class="font-bold text-[#5c4e37]">${item.code}</span>
+            ${altText}
+            <span class="text-slate-400">所需：${item.req} 顆</span>
+          </div>
+          <button onclick="removeBeadFromDraft(${index})" class="text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg transition">
+            <i data-lucide="minus-circle" class="w-3.5 h-3.5"></i>
+          </button>
+        `;
+        container.appendChild(row);
+      });
+
+      lucide.createIcons();
+    }
+
+    function removeBeadFromDraft(index) {
+      draftPatternBeads.splice(index, 1);
+      renderPatternDraftList();
+    }
+
+    // 預覽上傳的圖紙參考圖片並轉成 Base64 儲存
+    function previewPatternImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // 限制圖片大小在 1.5MB 以內，避免 localStorage 爆量
+      if (file.size > 1.5 * 1024 * 1024) {
+        showToast('圖片太大囉！請選擇 1.5MB 以下的檔案以防寫入失敗。', 'alert');
+        event.target.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        draftPatternImage = e.target.result;
+        const previewWrapper = document.getElementById('creator-image-preview-wrapper');
+        const previewImg = document.getElementById('creator-image-preview');
+        const statusText = document.getElementById('creator-image-status');
+
+        previewWrapper.classList.remove('hidden');
+        previewImg.src = draftPatternImage;
+        statusText.innerText = '圖片上傳成功';
+        lucide.createIcons();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 清除上傳預覽
+    function clearCreatorImage() {
+      draftPatternImage = '';
+      document.getElementById('creator-image-preview-wrapper').classList.add('hidden');
+      document.getElementById('creator-image-preview').src = '';
+      document.getElementById('creator-image-status').innerText = '圖片已移除';
+      document.getElementById('pattern-image-input').value = '';
+    }
+
+    // 開啟放大點擊預覽
+    function zoomPatternImage() {
+      const selector = document.getElementById('pattern-selector');
+      const name = selector.value;
+      const imgData = getPatternImage(name);
+      if (imgData) {
+        const modal = document.getElementById('image-zoom-modal');
+        const zoomedImg = document.getElementById('zoomed-image');
+        zoomedImg.src = imgData;
+        modal.classList.remove('hidden');
+        lucide.createIcons();
+      }
+    }
+
+    // 關閉點擊預覽
+    function closeImageZoom() {
+      document.getElementById('image-zoom-modal').classList.add('hidden');
+    }
+
+    // 儲存或更新圖紙物件
+    function saveNewPattern() {
+      const nameInput = document.getElementById('new-pattern-name');
+      const name = nameInput.value.trim();
+
+      if (!name) {
+        showToast('請輸入圖紙名稱', 'alert');
+        return;
+      }
+
+      if (draftPatternBeads.length === 0) {
+        showToast('請至少新增一項所需的拼豆色號', 'alert');
+        return;
+      }
+
+      // 編輯圖紙時如果名稱改變了，移除舊檔案
+      if (editingPatternOldName && editingPatternOldName !== name) {
+        delete patterns[editingPatternOldName];
+      }
+
+      // 儲存完整結構
+      patterns[name] = {
+        requirements: [...draftPatternBeads],
+        image: draftPatternImage
+      };
+      
+      saveData();
+      populatePatternSelector();
+      
+      document.getElementById('pattern-selector').value = name;
+      resetPatternSelections();
+      renderPatternRequirements();
+      closePatternCreator();
+      showToast(`成功儲存圖紙「${name}」！`);
+    }
+
+    // --- STREAMING_CHUNK:Designing bead add/edit setup and cascade updates... ---
+    // 開啟設定拼豆色號的 Modal (整合新增與修改/刪除)
+    function openBeadModal(code = null) {
+      editingBeadCode = code;
+      const modalTitle = document.getElementById('bead-modal-title');
+      const codeInput = document.getElementById('edit-bead-code');
+      const colorPicker = document.getElementById('edit-bead-color-picker');
+      const colorHex = document.getElementById('edit-bead-color-hex');
+      const nameInput = document.getElementById('edit-bead-name');
+      const textColorSelect = document.getElementById('edit-bead-text-color');
+      const delBtn = document.getElementById('btn-delete-bead');
+      const select = document.getElementById('edit-bead-category-select');
+
+      // 載入現有分類供直接選擇
+      select.innerHTML = '';
+      const uniqueCats = Array.from(new Set(beads.map(b => b.category || getBeadCategory(b.code))));
+      uniqueCats.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+      uniqueCats.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.innerText = `分類: ${cat}`;
+        select.appendChild(opt);
+      });
+      const optCustom = document.createElement('option');
+      optCustom.value = '__custom__';
+      optCustom.innerText = '＋自訂新分類';
+      select.appendChild(optCustom);
+
+      if (code) {
+        // 修改模式
+        const b = beads.find(x => x.code === code);
+        modalTitle.innerHTML = `<i data-lucide="edit-3" class="w-5 h-5 text-[#cf9d67]"></i> 修改拼豆色號`;
+        codeInput.value = b.code;
+        colorPicker.value = b.color;
+        colorHex.value = b.color;
+        nameInput.value = b.name;
+        textColorSelect.value = b.textColor || 'auto';
+        
+        if (uniqueCats.includes(b.category)) {
+          select.value = b.category;
+        } else {
+          select.value = '__custom__';
+          document.getElementById('edit-bead-category-custom').value = b.category;
+        }
+        delBtn.classList.remove('hidden');
+      } else {
+        // 新增模式
+        modalTitle.innerHTML = `<i data-lucide="plus-circle" class="w-5 h-5 text-[#cf9d67]"></i> 新增拼豆色號`;
+        codeInput.value = '';
+        colorPicker.value = '#cf9d67';
+        colorHex.value = '#cf9d67';
+        nameInput.value = '';
+        textColorSelect.value = 'auto';
+        if (uniqueCats.length > 0) select.value = uniqueCats[0];
+        delBtn.classList.add('hidden');
+      }
+
+      toggleEditCustomCategoryField();
+      document.getElementById('bead-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeBeadModal() {
+      document.getElementById('bead-modal').classList.add('hidden');
+    }
+
+    function syncEditColorText(val) {
+      document.getElementById('edit-bead-color-hex').value = val.toUpperCase();
+    }
+
+    function syncEditColorPicker(val) {
+      if (/^#[0-9A-F]{6}$/i.test(val)) {
+        document.getElementById('edit-bead-color-picker').value = val;
+      }
+    }
+
+    function toggleEditCustomCategoryField() {
+      const select = document.getElementById('edit-bead-category-select');
+      const customInput = document.getElementById('edit-bead-category-custom');
+      if (select.value === '__custom__') {
+        customInput.classList.remove('hidden');
+        customInput.focus();
+      } else {
+        customInput.classList.add('hidden');
+      }
+    }
+
+    // 新增/修改 MARD 色號
+    function submitBead() {
+      const codeInput = document.getElementById('edit-bead-code');
+      const colorInput = document.getElementById('edit-bead-color-hex');
+      const select = document.getElementById('edit-bead-category-select');
+      const customInput = document.getElementById('edit-bead-category-custom');
+      const nameInput = document.getElementById('edit-bead-name');
+      const textColorSelect = document.getElementById('edit-bead-text-color');
+
+      const code = codeInput.value.trim().toUpperCase();
+      const color = colorInput.value.trim();
+      const remark = nameInput.value.trim();
+      const tColor = textColorSelect.value;
+
+      if (!code) {
+        showToast('請輸入拼豆色號！', 'alert');
+        return;
+      }
+
+      const existing = beads.find(b => b.code === code);
+      if (existing && editingBeadCode !== code) {
+        showToast(`色號 ${code} 已經存在於庫存中！`, 'alert');
+        return;
+      }
+
+      if (!/^#[0-9A-F]{6}$/i.test(color)) {
+        showToast('請輸入正確的 16 進位顏色代碼（如 #FF0000）', 'alert');
+        return;
+      }
+
+      let category = '';
+      if (select.value === '__custom__') {
+        category = customInput.value.trim().toUpperCase();
+        if (!category) {
+          showToast('請輸入自訂分類名稱！', 'alert');
+          return;
+        }
+      } else {
+        category = select.value;
+      }
+
+      const name = getDefaultName(code, remark);
+
+      if (editingBeadCode) {
+        // 更新現有色號與關聯的級聯更新 (Cascade Update)
+        const b = beads.find(x => x.code === editingBeadCode);
+        
+        if (editingBeadCode !== code) {
+           // 當色號代碼變更時，同步修改所有圖紙之相依性
+           Object.keys(patterns).forEach(pName => {
+             patterns[pName].forEach(req => {
+               if (req.code === editingBeadCode) req.code = code;
+               if (req.altCodes) {
+                 req.altCodes = req.altCodes.map(alt => alt === editingBeadCode ? code : alt);
+               }
+             });
+           });
+           if (selectedBeads.has(editingBeadCode)) {
+             selectedBeads.delete(editingBeadCode);
+             selectedBeads.add(code);
+           }
+        }
+
+        b.code = code;
+        b.color = color;
+        b.name = name;
+        b.category = category;
+        if (tColor === 'auto') {
+          delete b.textColor;
+        } else {
+          b.textColor = tColor;
+        }
+        showToast(`成功更新色號 ${code}！`);
+      } else {
+        // 新建色號並自訂屬性
+        const newBead = {
+          code: code,
+          name: name,
+          stock: 0,
+          pending: 0,
+          color: color,
+          category: category
+        };
+        if (tColor !== 'auto') newBead.textColor = tColor;
+        beads.push(newBead);
+        showToast(`成功新增色號 ${code}！`);
+      }
+
+      // 重新依分類與排序將色號排序
+      beads.sort((a, b) => {
+        const isAZG = a.code.startsWith('ZG');
+        const isBZG = b.code.startsWith('ZG');
+        if (isAZG && !isBZG) return 1;
+        if (!isAZG && isBZG) return -1;
+        return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+      });
+
+      saveData();
+      renderCategoryTabs();
+      renderBeads();
+      renderStats();
+      setupDatalistOptions();
+      resetPatternSelections();
+      renderPatternRequirements();
+      closeBeadModal();
+    }
+
+    function promptDeleteBead() {
+      if (!editingBeadCode) return;
+      showCustomConfirm(
+        '刪除色號確認',
+        `確定要永久刪除色號「${editingBeadCode}」嗎？這將會清除它的所有庫存資料。若現有圖紙中有綁定此色號，圖紙中的該項需求也將會被一併移除！`,
+        () => {
+          beads = beads.filter(b => b.code !== editingBeadCode);
+          selectedBeads.delete(editingBeadCode);
+          
+          // 移除所有圖紙內該拼豆的需求綁定
+          Object.keys(patterns).forEach(pName => {
+             patterns[pName] = patterns[pName].filter(req => req.code !== editingBeadCode);
+             patterns[pName].forEach(req => {
+               if (req.altCodes) {
+                 req.altCodes = req.altCodes.filter(alt => alt !== editingBeadCode);
+               }
+             });
+          });
+
+          saveData();
+          renderCategoryTabs();
+          renderBeads();
+          renderStats();
+          setupDatalistOptions();
+          resetPatternSelections();
+          renderPatternRequirements();
+          closeBeadModal();
+          showToast(`已成功移除色號 ${editingBeadCode}`);
+        }
+      );
+    }
+
+    // --- STREAMING_CHUNK:Implementing batch operations and exports... ---
+    // 批次修改視窗管理
+    function openBatchModal(type) {
+      currentBatchActionType = type;
+      const title = document.getElementById('batch-modal-title');
+      const desc = document.getElementById('batch-modal-desc');
+      const label = document.getElementById('batch-input-label');
+      const input = document.getElementById('batch-input-value');
+
+      if (type === 'consume') {
+        title.innerText = '批次扣除庫存 (消耗)';
+        desc.innerText = `準備對選取的 ${selectedBeads.size} 個色號進行扣減。`;
+        label.innerText = '消耗數量 (顆)';
+        input.value = 500;
+      } else {
+        title.innerText = '批次新增待補貨';
+        desc.innerText = `準備對選取的 ${selectedBeads.size} 個色號追加待確認補貨數（此數值不會立刻加進總數）。`;
+        label.innerText = '補貨數量 (顆)';
+        input.value = 500;
+      }
+
+      document.getElementById('batch-modal').classList.remove('hidden');
+    }
+
+    function closeBatchModal() {
+      document.getElementById('batch-modal').classList.add('hidden');
+    }
+
+    function executeBatchAction() {
+      const input = document.getElementById('batch-input-value');
+      const val = parseInt(input.value);
+      if (isNaN(val) || val <= 0) {
+        showToast('請輸入正確的整數數量', 'alert');
+        return;
+      }
+
+      let successCount = 0;
+      let failCount = 0;
+
+      selectedBeads.forEach(code => {
+        const bead = beads.find(b => b.code === code);
+        if (bead) {
+          if (currentBatchActionType === 'consume') {
+            if (bead.stock >= val) {
+              bead.stock -= val;
+              successCount++;
+            } else {
+              failCount++;
+            }
+          } else {
+            bead.pending += val;
+            successCount++;
+          }
+        }
+      });
+
+      saveData();
+      renderBeads();
+      renderStats();
+      renderPendingList();
+      renderPatternRequirements();
+      closeBatchModal();
+      
+      if (currentBatchActionType === 'consume') {
+        showToast(`批次消耗：${successCount} 個成功` + (failCount > 0 ? `，${failCount} 個因庫存不足而略過` : ''));
+      } else {
+        showToast(`已成功為 ${successCount} 個色號新增待確認補貨數量：+${val}`);
+      }
+      
+      clearBatchSelection();
+    }
+
+    // 導入 CSV 檔案
+    function importCSV(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        parseAndApplyCSV(text);
+      };
+      reader.readAsText(file);
+    }
+
+    function parseAndApplyCSV(text) {
+      try {
+        const lines = text.split('\n');
+        if (lines.length < 2) {
+          showToast('CSV 格式錯誤，內容行數不足', 'alert');
+          return;
+        }
+
+        const headers = lines[0].split(',');
+        const mardIndex = headers.findIndex(h => h.trim().toUpperCase().includes('MARD'));
+        const stockIndex = headers.findIndex(h => h.trim().includes('庫存'));
+        const pendingIndex = headers.findIndex(h => h.trim().includes('補貨'));
+
+        if (mardIndex === -1) {
+          showToast('無法找到 MARD 色號欄位，請上傳正確格式之拼豆 CSV', 'alert');
+          return;
+        }
+
+        let updatedCount = 0;
+
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
+          const columns = line.split(',');
+          const code = columns[mardIndex]?.trim();
+          if (!code) continue;
+
+          const cleanCode = code.replace(/白色|黑色|透明/g, '').trim();
+
+          const stockVal = stockIndex !== -1 ? parseInt(columns[stockIndex]) : 0;
+          const pendingVal = pendingIndex !== -1 ? parseInt(columns[pendingIndex]) : 0;
+
+          const bead = beads.find(b => b.code === cleanCode || b.code === code);
+          if (bead) {
+            bead.stock = isNaN(stockVal) ? 0 : stockVal;
+            bead.pending = isNaN(pendingVal) ? 0 : pendingVal;
+            updatedCount++;
+          }
+        }
+
+        saveData();
+        renderCategoryTabs();
+        renderBeads();
+        renderStats();
+        renderPendingList();
+        renderPatternRequirements();
+        showToast(`成功導入！已更新 ${updatedCount} 個 MARD 拼豆色號`);
+      } catch (err) {
+        console.error(err);
+        showToast('解析 CSV 發生錯誤，請檢查檔案格式', 'alert');
+      }
+    }
+
+    // 導出為 CSV 數據
+    function exportToCSV() {
+      let csvContent = "\ufeffMARD,庫存,補貨\r\n";
+      
+      beads.forEach(bead => {
+        csvContent += `"${bead.code}",${bead.stock},${bead.pending > 0 ? bead.pending : ''}\r\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `MARD_拼豆數量管理_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('庫存 CSV 檔案已成功導出！');
+    }
+
+    // 重置所有拼豆數量 (奶油風確認彈窗代替原生 confirm)
+    function resetToDefault() {
+      showCustomConfirm(
+        '數據全部歸零確認',
+        '確定要將所有拼豆色號的庫存與補貨數量「全部歸零」嗎？這會清除所有的庫存與修改紀錄，且無法復原。',
+        () => {
+          localStorage.removeItem('mard_beads_data');
+          localStorage.removeItem('mard_patterns_data');
+          
+          beads = populateEmptyBeads(); 
+          patterns = JSON.parse(JSON.stringify(initialPatternsData));
+          
+          renderCategoryTabs();
+          renderBeads();
+          renderStats();
+          renderPendingList();
+          populatePatternSelector();
+          resetPatternSelections();
+          renderPatternRequirements();
+          showToast('所有拼豆數量已成功歸零，您可以開始登記新庫存。');
+        }
+      );
+    }
+
+    // 吐司通知回饋
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toast-icon');
+      const text = document.getElementById('toast-message');
+
+      text.innerText = message;
+      
+      if (type === 'alert') {
+        icon.className = "w-4 h-4 text-rose-500 animate-bounce";
+        icon.setAttribute('data-lucide', 'alert-circle');
+      } else {
+        icon.className = "w-4 h-4 text-amber-200";
+        icon.setAttribute('data-lucide', 'check-circle');
+      }
+
+      lucide.createIcons();
+
+      toast.className = "fixed bottom-6 right-6 z-[200] transform translate-y-0 opacity-100 transition-all duration-300 bg-[#5c4e37] text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3";
+      
+      setTimeout(() => {
+        toast.className = "fixed bottom-6 right-6 z-[200] transform translate-y-12 opacity-0 pointer-events-none transition-all duration-300 bg-[#5c4e37] text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3";
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
