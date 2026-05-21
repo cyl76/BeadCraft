@@ -1906,15 +1906,15 @@
       const input = document.getElementById('batch-input-value');
 
       if (type === 'consume') {
-        title.innerText = '批次扣除庫存 (消耗)';
-        desc.innerText = `準備對選取的 ${selectedBeads.size} 個色號進行扣減。`;
+        title.innerText = '批次扣除庫存';
+        desc.innerText = `對選取的 ${selectedBeads.size} 個色號進行扣減。`;
         label.innerText = '消耗數量 (顆)';
         input.value = 500;
       } else {
-        title.innerText = '批次新增待補貨';
-        desc.innerText = `準備對選取的 ${selectedBeads.size} 個色號追加待確認補貨數（此數值不會立刻加進總數）。`;
+        title.innerText = '批次新增補貨';
+        desc.innerText = `對選取的 ${selectedBeads.size} 個色號加入補貨。`;
         label.innerText = '補貨數量 (顆)';
-        input.value = 500;
+        input.value = 1000;
       }
 
       document.getElementById('batch-modal').classList.remove('hidden');
