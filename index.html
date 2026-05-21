@@ -951,57 +951,60 @@
           container.appendChild(card);
         } else {
           const row = document.createElement('div');
-          row.className = `flex flex-col sm:flex-row justify-between items-stretch sm:items-center p-3 rounded-2xl border transition-all group ${
+          row.className = `flex flex-row justify-between items-center p-2 sm:p-3 rounded-2xl border transition-all group ${
             isSelected ? 'border-[#cf9d67] bg-[#fdfaf2]' : 'border-[#ede3cf]/40 bg-white hover:bg-[#faf7f0]'
-          } gap-3 cursor-pointer`;
+          } gap-2 sm:gap-4 cursor-pointer w-full min-w-0`;
           row.onclick = () => toggleBeadSelection(bead.code);
 
           row.innerHTML = `
-            <div class="flex items-center gap-3 min-w-[150px]">
-              <div class="w-5 h-5 rounded-md border flex items-center justify-center ${isSelected ? 'bg-[#cf9d67] border-[#cf9d67]' : 'bg-white border-slate-300'}" onclick="event.stopPropagation(); toggleBeadSelection('${bead.code}')">
-                ${isSelected ? '<i data-lucide="check" class="w-3 h-3 text-white"></i>' : ''}
+            <!-- 左側：多選、色卡、色號與備註 -->
+            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+              <div class="w-4 h-4 sm:w-5 sm:h-5 rounded-md border flex items-center justify-center ${isSelected ? 'bg-[#cf9d67] border-[#cf9d67]' : 'bg-white border-slate-300'}" onclick="event.stopPropagation(); toggleBeadSelection('${bead.code}')">
+                ${isSelected ? '<i data-lucide="check" class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white"></i>' : ''}
               </div>
-              <div class="w-8 h-8 rounded-full shadow-inner border border-[#ede3cf]/60 relative overflow-hidden flex items-center justify-center" style="background-color: ${bead.color}">
+              <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full shadow-inner border border-[#ede3cf]/60 relative overflow-hidden flex items-center justify-center shrink-0" style="background-color: ${bead.color}">
                  <button onclick="event.stopPropagation(); openBeadModal('${bead.code}')" class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition" title="修改或刪除">
-                    <i data-lucide="edit-3" class="w-3.5 h-3.5 text-white"></i>
+                    <i data-lucide="edit-3" class="w-3 h-3 text-white"></i>
                  </button>
               </div>
-              <div>
-                <span class="font-black text-[#5c4e37]">${bead.code}</span>
-                <span class="text-xs text-[#8c816f] block">${bead.name}</span>
+              <div class="min-w-[42px] sm:min-w-[70px]">
+                <span class="font-black text-[#5c4e37] text-xs sm:text-sm block leading-tight">${bead.code}</span>
+                <span class="text-[9px] sm:text-xs text-[#8c816f] block truncate max-w-[45px] sm:max-w-[100px]">${bead.name}</span>
               </div>
             </div>
 
-            <div class="flex items-center gap-4 px-2" onclick="event.stopPropagation();">
+            <!-- 中間：庫存快速調整與待補貨提示 -->
+            <div class="flex items-center gap-2 sm:gap-4 px-1 shrink-0" onclick="event.stopPropagation();">
               <div>
-                <span class="text-[10px] text-slate-400 block">庫存總數</span>
-                <div class="flex items-center gap-1.5">
-                  <button onclick="adjustStock('${bead.code}', -100)" class="w-5 h-5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded flex items-center justify-center font-bold">-</button>
-                  <span class="font-bold text-slate-800 text-sm min-w-[45px] text-center">${bead.stock}</span>
-                  <button onclick="adjustStock('${bead.code}', 100)" class="w-5 h-5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded flex items-center justify-center font-bold">+</button>
+                <span class="text-[8px] sm:text-[10px] text-slate-400 block text-center sm:text-left font-bold">庫存</span>
+                <div class="flex items-center gap-1">
+                  <button onclick="adjustStock('${bead.code}', -100)" class="w-4 h-4 sm:w-5 sm:h-5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] sm:text-xs rounded flex items-center justify-center font-bold">-</button>
+                  <span class="font-bold text-slate-800 text-xs sm:text-sm min-w-[28px] sm:min-w-[45px] text-center">${bead.stock}</span>
+                  <button onclick="adjustStock('${bead.code}', 100)" class="w-4 h-4 sm:w-5 sm:h-5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] sm:text-xs rounded flex items-center justify-center font-bold">+</button>
                 </div>
               </div>
 
               ${bead.pending > 0 ? `
-                <div class="bg-amber-50 border border-amber-200 rounded-xl px-2 py-0.5 flex items-center gap-1.5">
+                <div class="bg-amber-50 border border-amber-200 rounded-lg px-1 sm:px-2 py-0.5 flex items-center gap-1 shrink-0">
                   <div>
-                    <span class="text-[9px] text-amber-500 block font-bold">待補貨數</span>
-                    <span class="text-xs font-black text-amber-700">+${bead.pending}</span>
+                    <span class="text-[8px] sm:text-[9px] text-amber-500 block font-bold leading-none">待補</span>
+                    <span class="text-[10px] sm:text-xs font-black text-amber-700 leading-tight">+${bead.pending}</span>
                   </div>
-                  <button onclick="confirmSingleRestock('${bead.code}')" class="bg-[#cf9d67] hover:bg-[#bc8954] text-white text-[10px] px-1.5 py-0.5 rounded transition font-medium">點收</button>
+                  <button onclick="confirmSingleRestock('${bead.code}')" class="bg-[#cf9d67] hover:bg-[#bc8954] text-white text-[8px] sm:text-[10px] px-1 py-0.5 rounded transition font-medium">點收</button>
                 </div>
               ` : ''}
             </div>
 
-            <div class="flex items-center gap-2 sm:ml-auto" onclick="event.stopPropagation();">
-              <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-1 w-28">
-                <input type="number" id="consume-val-list-${bead.code}" placeholder="消耗" class="w-full bg-transparent text-center text-xs focus:outline-none font-bold">
-                <button onclick="submitConsume('${bead.code}', true)" class="text-[10px] bg-slate-800 text-white px-2 py-1 rounded-lg hover:bg-slate-700 transition">送出</button>
+            <!-- 右側：消耗與補貨輸入框與按鈕（白底黑字、絕不換行） -->
+            <div class="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0 flex-nowrap" onclick="event.stopPropagation();">
+              <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-0.5 sm:p-1 w-[80px] sm:w-28 shrink-0">
+                <input type="number" id="consume-val-list-${bead.code}" placeholder="數量" class="w-full bg-transparent text-center text-[10px] sm:text-xs focus:outline-none font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none min-w-0">
+                <button onclick="submitConsume('${bead.code}', true)" class="text-[10px] bg-white text-[#4a453e] border border-slate-200/65 font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg hover:bg-slate-100 transition shadow-sm shrink-0">消耗</button>
               </div>
 
-              <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-1 w-28">
-                <input type="number" id="restock-val-list-${bead.code}" placeholder="補貨" class="w-full bg-transparent text-center text-xs focus:outline-none font-bold">
-                <button onclick="submitRestock('${bead.code}', true)" class="text-[10px] bg-[#cf9d67] text-white px-2 py-1 rounded-lg hover:bg-[#bc8954] transition">補貨</button>
+              <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-0.5 sm:p-1 w-[80px] sm:w-28 shrink-0">
+                <input type="number" id="restock-val-list-${bead.code}" placeholder="數量" class="w-full bg-transparent text-center text-[10px] sm:text-xs focus:outline-none font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none min-w-0">
+                <button onclick="submitRestock('${bead.code}', true)" class="text-[10px] bg-white text-[#4a453e] border border-slate-200/65 font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg hover:bg-slate-100 transition shadow-sm shrink-0">補貨</button>
               </div>
             </div>
           `;
