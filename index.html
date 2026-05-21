@@ -180,7 +180,7 @@
                   <select id="pattern-selector" onchange="resetPatternSelections(); renderPatternRequirements()" class="flex-grow bg-[#faf7f0] border border-[#ede3cf] text-[#4a453e] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
                     <!-- 圖紙分類選項 -->
                   </select>
-                  <button onclick="editCurrentPattern()" class="text-[#bf9e74] hover:bg-[#fcf3ef] border border-[#ede3cf] p-2 rounded-xl transition" title="修改此圖紙">
+                  <button onclick="editCurrentPattern()" class="text-[#bf9e74] hover:bg-[#fcf3ef] border-[#ede3cf] p-2 rounded-xl transition" title="修改此圖紙">
                     <i data-lucide="edit-3" class="w-4 h-4"></i>
                   </button>
                   <button onclick="deleteCurrentPattern()" class="text-[#e49b8c] hover:bg-[#fcf3ef] border border-[#f5ded6] p-2 rounded-xl transition" title="刪除此圖紙">
@@ -347,32 +347,35 @@
         <div class="flex justify-between items-center mb-3">
           <h3 class="text-lg font-bold text-[#5c4e37] flex items-center gap-1.5">
             <i data-lucide="drafting-compass" class="w-5 h-5 text-[#cf9d67]"></i>
-            圖紙需求
+            新增圖紙
           </h3>
           <button onclick="closePatternCreator()" class="text-[#8c816f] hover:text-black">
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
         </div>
         
+        <!-- 圖片上傳 & 分類資訊行 -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           <!-- 圖紙名稱 -->
           <div>
             <label class="block text-xs font-bold text-[#5c4e37] mb-1">圖紙名稱</label>
             <input type="text" id="new-pattern-name" placeholder="輸入名稱" class="w-full bg-[#faf7f0] border border-[#ede3cf] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
           </div>
-          <!-- 新增分類欄位 -->
+          <!-- 新增分類欄位 - 升級為下拉式選單與自訂功能 -->
           <div>
             <label class="block text-xs font-bold text-[#5c4e37] mb-1">圖紙分類</label>
-            <input type="text" id="new-pattern-category" list="pattern-category-options" placeholder="自訂義分類" class="w-full bg-[#faf7f0] border border-[#ede3cf] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
-            <datalist id="pattern-category-options">
-              <!-- 由 JavaScript 動態生成目前已有使用的自訂類別，不顯示預設類別 -->
-            </datalist>
+            <div class="flex flex-col gap-1.5">
+              <select id="new-pattern-category-select" onchange="togglePatternCustomCategoryField()" class="w-full bg-[#faf7f0] border border-[#ede3cf] text-[#4a453e] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
+                <!-- 由 JavaScript 動態生成目前已有使用的自訂類別 -->
+              </select>
+              <input type="text" id="new-pattern-category-custom" placeholder="請輸入自訂分類名稱" class="hidden w-full bg-[#faf7f0] border border-[#ede3cf] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67] uppercase">
+            </div>
           </div>
         </div>
 
         <!-- 圖片上傳區塊 -->
         <div class="mb-4">
-          <label class="block text-xs font-bold text-[#5c4e37] mb-1">上傳參考圖片 (選填，可預覽及下載)</label>
+          <label class="block text-xs font-bold text-[#5c4e37] mb-1">上傳圖片</label>
           <div class="flex items-center gap-3 bg-[#faf7f0] p-3 rounded-2xl border border-[#ede3cf]">
             <label class="bg-white hover:bg-[#faf7f0] text-[#5c4e37] border border-[#e6d9bf] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer whitespace-nowrap">
               <i data-lucide="image" class="w-4 h-4 text-[#bf9e74]"></i> 選擇圖片
@@ -733,7 +736,7 @@
       renderStats();
       renderPendingList();
       populatePatternSelector();
-      updatePatternCategoryDatalist();
+      updatePatternCategorySelect();
       resetPatternSelections();
       renderPatternRequirements();
       setupDatalistOptions();
@@ -999,7 +1002,7 @@
               </div>
               <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full shadow-inner border border-[#ede3cf]/60 relative overflow-hidden flex items-center justify-center shrink-0" style="background-color: ${bead.color}">
                  <button onclick="event.stopPropagation(); openBeadModal('${bead.code}')" class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition" title="修改或刪除">
-                    <i data-lucide="edit-3" class="w-3 h-3 text-white"></i>
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5 text-white"></i>
                  </button>
               </div>
               <div class="min-w-[42px] sm:min-w-[70px]">
@@ -1325,30 +1328,59 @@
       }
     }
 
-    // 動態生成自訂分類的建議清單（不顯示預設值，有建立新類別才出現在清單中）
-    function updatePatternCategoryDatalist() {
-      const datalist = document.getElementById('pattern-category-options');
-      if (!datalist) return;
-      datalist.innerHTML = '';
+    // --- STREAMING_CHUNK: Managing select menus and custom categories for patterns... ---
+    // 切換是否顯示自訂分類輸入欄位
+    function togglePatternCustomCategoryField() {
+      const select = document.getElementById('new-pattern-category-select');
+      const customInput = document.getElementById('new-pattern-category-custom');
+      if (select.value === '__custom__') {
+        customInput.classList.remove('hidden');
+        customInput.focus();
+      } else {
+        customInput.classList.add('hidden');
+      }
+    }
 
+    // 動態生成自訂分類下拉式選單（含：未分類、現有自訂分類、自訂新分類選項）
+    function updatePatternCategorySelect() {
+      const select = document.getElementById('new-pattern-category-select');
+      if (!select) return;
+
+      const currentVal = select.value;
+      select.innerHTML = '';
+
+      // 1. 預設「未分類」選項
+      const optDefault = document.createElement('option');
+      optDefault.value = '未分類';
+      optDefault.innerText = '未分類';
+      select.appendChild(optDefault);
+
+      // 2. 獲取所有目前圖紙中有在使用到的自定義分類
       const categories = new Set();
       Object.keys(patterns).forEach(name => {
         const pattern = patterns[name];
         if (pattern && pattern.category) {
           const cat = pattern.category.trim();
-          // 過濾掉未分類，僅收集使用者自行輸入的類別
           if (cat && cat !== '未分類') {
             categories.add(cat);
           }
         }
       });
 
+      // 3. 排序並寫入現有分類選項
       const sortedCats = Array.from(categories).sort((a, b) => a.localeCompare(b, 'zh-Hant-TW'));
       sortedCats.forEach(cat => {
         const opt = document.createElement('option');
         opt.value = cat;
-        datalist.appendChild(opt);
+        opt.innerText = cat;
+        select.appendChild(opt);
       });
+
+      // 4. 提供新增分類的選項
+      const optCustom = document.createElement('option');
+      optCustom.value = '__custom__';
+      optCustom.innerText = '＋自訂新分類';
+      select.appendChild(optCustom);
     }
 
     function resetPatternSelections() {
@@ -1523,7 +1555,7 @@
           delete patterns[name];
           saveData();
           populatePatternSelector();
-          updatePatternCategoryDatalist();
+          updatePatternCategorySelect();
           resetPatternSelections();
           renderPatternRequirements();
           showToast(`已成功移除圖紙 ${name}`);
@@ -1531,14 +1563,20 @@
       );
     }
 
-    // --- STREAMING_CHUNK: Setting up modal properties for patterns... ---
+    // --- STREAMING_CHUNK: Setting up modal properties and handling dropdown selections... ---
     // 進入圖紙建立介面
     function openPatternCreator() {
       editingPatternOldName = null;
       draftPatternBeads = [];
       draftPatternImage = '';
       document.getElementById('new-pattern-name').value = '';
-      document.getElementById('new-pattern-category').value = '';
+      
+      // 更新分類下拉選單，並重置為「未分類」狀態
+      updatePatternCategorySelect();
+      document.getElementById('new-pattern-category-select').value = '未分類';
+      document.getElementById('new-pattern-category-custom').value = '';
+      document.getElementById('new-pattern-category-custom').classList.add('hidden');
+
       document.getElementById('pattern-item-search').value = '';
       document.getElementById('pattern-item-alt').value = '';
       document.getElementById('pattern-item-qty').value = '';
@@ -1548,7 +1586,6 @@
       document.getElementById('creator-image-status').innerText = '尚未選擇圖片';
       document.getElementById('pattern-image-input').value = '';
 
-      updatePatternCategoryDatalist();
       renderPatternDraftList();
       document.getElementById('pattern-modal').classList.remove('hidden');
     }
@@ -1564,7 +1601,32 @@
       draftPatternImage = getPatternImage(name) || '';
       
       document.getElementById('new-pattern-name').value = name;
-      document.getElementById('new-pattern-category').value = patterns[name].category || '未分類';
+      
+      // 更新分類下拉選單，並解析當前圖紙的分類
+      updatePatternCategorySelect();
+      const currentCategory = patterns[name].category || '未分類';
+      const select = document.getElementById('new-pattern-category-select');
+      const customInput = document.getElementById('new-pattern-category-custom');
+
+      // 檢查當前分類是否已存在於現有選項中
+      let hasOption = false;
+      for (let i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === currentCategory) {
+          hasOption = true;
+          break;
+        }
+      }
+
+      if (hasOption) {
+        select.value = currentCategory;
+        customInput.value = '';
+        customInput.classList.add('hidden');
+      } else {
+        select.value = '__custom__';
+        customInput.value = currentCategory;
+        customInput.classList.remove('hidden');
+      }
+
       document.getElementById('pattern-item-search').value = '';
       document.getElementById('pattern-item-alt').value = '';
       document.getElementById('pattern-item-qty').value = '';
@@ -1584,7 +1646,6 @@
         statusText.innerText = '尚未選擇圖片';
       }
       
-      updatePatternCategoryDatalist();
       renderPatternDraftList();
       document.getElementById('pattern-modal').classList.remove('hidden');
     }
@@ -1765,8 +1826,16 @@
       const nameInput = document.getElementById('new-pattern-name');
       const name = nameInput.value.trim();
 
-      const categoryInput = document.getElementById('new-pattern-category');
-      let category = categoryInput.value.trim();
+      // 解析分類選擇或自訂輸入
+      const select = document.getElementById('new-pattern-category-select');
+      const customInput = document.getElementById('new-pattern-category-custom');
+      
+      let category = '未分類';
+      if (select.value === '__custom__') {
+        category = customInput.value.trim();
+      } else {
+        category = select.value;
+      }
       if (!category) category = '未分類';
 
       if (!name) {
@@ -1791,7 +1860,7 @@
       
       saveData();
       populatePatternSelector();
-      updatePatternCategoryDatalist();
+      updatePatternCategorySelect();
       
       document.getElementById('pattern-selector').value = name;
       resetPatternSelections();
@@ -2103,6 +2172,7 @@
                   renderStats();
                   renderPendingList();
                   populatePatternSelector();
+                  updatePatternCategorySelect();
                   resetPatternSelections();
                   renderPatternRequirements();
                   setupDatalistOptions();
@@ -2297,7 +2367,7 @@
           renderStats();
           renderPendingList();
           populatePatternSelector();
-          updatePatternCategoryDatalist();
+          updatePatternCategorySelect();
           resetPatternSelections();
           renderPatternRequirements();
           showToast('所有拼豆數量已成功歸零，您可以開始登記新庫存。');
