@@ -280,7 +280,7 @@
             <button onclick="openBatchModal('restock')" class="bg-[#bf9e74] hover:bg-[#af8d63] text-white text-xs px-3 py-1.5 rounded-lg transition font-medium">
               批次補貨
             </button>
-            <button onclick="clearBatchSelection()" class="text-slate-500 hover:text-slate-700 text-xs px-2 py-1.5 transition">
+            <button onclick="clearBatchSelection()" class="text-slate hover:text-slate-700 text-xs px-2 py-1.5 transition">
               取消選擇
             </button>
           </div>
@@ -326,7 +326,7 @@
         <p id="batch-modal-desc" class="text-xs text-[#8c816f] mb-4">請輸入想要對所選色號進行的操作數量</p>
         
         <div class="mb-4">
-          <label class="block text-xs font-bold text-slate-500 mb-1" id="batch-input-label">數量</label>
+          <label class="block text-xs font-bold text-slate mb-1" id="batch-input-label">數量</label>
           <input type="number" id="batch-input-value" min="1" value="500" class="w-full bg-[#faf7f0] border border-[#ede3cf] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cf9d67]">
         </div>
 
@@ -499,7 +499,7 @@
         </div>
 
         <div class="flex justify-between items-center mt-6 pt-4 border-t border-[#ede3cf]">
-          <button id="btn-delete-bead" onclick="promptDeleteBead()" class="hidden px-4 py-2 text-sm font-medium text-rose-500 hover:bg-rose-50 rounded-xl transition flex items-center gap-1">
+          <button id="btn-delete-bead" onclick="promptDeleteBead()" class="hidden px-4 py-2 text-sm font-medium text-rose hover:bg-rose-50 rounded-xl transition flex items-center gap-1">
             <i data-lucide="trash-2" class="w-4 h-4"></i> 刪除
           </button>
           <div class="flex gap-2 ml-auto">
@@ -523,7 +523,7 @@
           <button id="btn-confirm-cancel" onclick="closeCustomConfirm()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition">
             取消
           </button>
-          <button id="btn-confirm-submit" onclick="executeCustomConfirm()" class="px-4 py-2 text-sm font-medium text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition">
+          <button id="btn-confirm-submit" onclick="executeCustomConfirm()" class="px-4 py-2 text-sm font-medium text-white bg-rose hover:bg-rose-600 rounded-xl transition">
             確定
           </button>
         </div>
@@ -979,14 +979,14 @@
             <div class="space-y-1.5 mt-auto" onclick="event.stopPropagation();">
               <!-- 消耗快速調整按鈕 - 按一次快速消耗 500 -->
               <div class="flex items-center gap-1 bg-white/20 p-1 rounded-xl border" style="border-color: ${textColor}33;">
-                <button onclick="adjustStock('${bead.code}', -500)" class="w-6 h-6 rounded-lg bg-white/15 hover:bg-white/30 text-[9px] flex items-center justify-center font-bold" title="快速消耗 500 顆">-500</button>
+                <button onclick="adjustStock('${bead.code}', -500)" class="w-6 h-6 rounded-lg bg-white/15 hover:bg-white/30 text-[9px] flex items-center justify-center font-bold" title="快速消耗 500 顆">-</button>
                 <input type="number" id="consume-val-${bead.code}" placeholder="消耗" class="w-full bg-transparent text-center text-xs focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold placeholder-white/50" style="color: ${textColor};" onkeydown="handleQuickAction(event, '${bead.code}', 'consume')">
                 <button onclick="submitConsume('${bead.code}')" class="text-[10px] bg-white text-[#4a453e] font-bold px-1.5 py-1 rounded-lg hover:bg-slate-100 transition shadow-sm">消耗</button>
               </div>
 
               <!-- 補貨快速調整按鈕 - 按一次快速增加 1000 顆 -->
               <div class="flex items-center gap-1 bg-black/10 p-1 rounded-xl border" style="border-color: ${textColor}15;">
-                <button onclick="adjustStock('${bead.code}', 1000)" class="w-6 h-6 rounded-lg bg-white/15 hover:bg-white/30 text-[9px] flex items-center justify-center font-bold text-white" title="快速登記補貨 1000 顆">+1k</button>
+                <button onclick="adjustStock('${bead.code}', 1000)" class="w-6 h-6 rounded-lg bg-white/15 hover:bg-white/30 text-[9px] flex items-center justify-center font-bold text-white" title="快速登記補貨 1000 顆">+</button>
                 <input type="number" id="restock-val-${bead.code}" placeholder="補貨" class="w-full bg-transparent text-center text-xs focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold placeholder-white/50" style="color: ${textColor};" onkeydown="handleQuickAction(event, '${bead.code}', 'restock')">
                 <button onclick="submitRestock('${bead.code}')" class="text-[10px] bg-white text-[#4a453e] font-bold px-1.5 py-1 rounded-lg hover:bg-slate-100 transition shadow-sm">補貨</button>
               </div>
