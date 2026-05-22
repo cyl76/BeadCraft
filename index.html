@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <title>BeadCraft - MARD 拼豆管理系統</title>
+  <title>Bead Craft</title>
 
   <!-- iOS ICON -->
   <link rel="apple-touch-icon" href="https://i.postimg.cc/0jKxZDqz/1.png">
@@ -77,7 +77,7 @@
           <!-- 進階導出下拉選單 -->
           <div class="relative inline-block text-left" id="export-dropdown-container">
             <button onclick="toggleExportDropdown(event)" class="bg-white/70 hover:bg-white text-[#5c4e37] border border-[#e6d9bf] px-3 py-1.5 rounded-xl text-sm font-medium flex items-center gap-1.5 transition shadow-sm">
-              <i data-lucide="download" class="w-4 h-4"></i> 導出 <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+              <i data-lucide="upload" class="w-4 h-4"></i> 導出 <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
             </button>
             <div id="export-dropdown" class="hidden absolute right-0 mt-2 w-52 rounded-2xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-[60] focus:outline-none py-1.5 border border-[#ede3cf]">
               <button onclick="exportSystemData()" class="w-full text-left px-4 py-2.5 text-xs text-[#5c4e37] hover:bg-[#faf7f0] flex items-center gap-2 font-bold transition">
@@ -91,7 +91,7 @@
 
           <!-- 導入（同時支援舊版 CSV 與新版 JSON） -->
           <label class="bg-white/70 hover:bg-white text-[#5c4e37] border border-[#e6d9bf] px-3 py-1.5 rounded-xl text-sm font-medium flex items-center gap-1.5 transition shadow-sm cursor-pointer">
-            <i data-lucide="upload" class="w-4 h-4"></i> 導入
+            <i data-lucide="download" class="w-4 h-4"></i> 導入
             <input type="file" id="system-file-input" accept=".json,.csv" class="hidden" onchange="importSystemData(event)">
           </label>
 
@@ -316,7 +316,7 @@
 
     <!-- 底部資訊 -->
     <footer class="bg-[#f1eada] text-[#8c816f] text-xs py-6 border-t border-[#e2d5bd] text-center pb-28 lg:pb-6">
-      <p class="mb-1">※您的修改與上傳圖片，僅會智慧壓縮後儲存於本機裝置中。</p>
+      <p class="mb-1">※您的修改與圖片，儲存於本機裝置中。</p>
     </footer>
 
     <!-- 彈出視窗 1：批次操作 Modal -->
@@ -375,7 +375,7 @@
 
         <!-- 圖片上傳區塊（內含縮圖自動壓縮引擎） -->
         <div class="mb-4">
-          <label class="block text-xs font-bold text-[#5c4e37] mb-1">上傳圖片（將自動進行高壓縮率輕量化）</label>
+          <label class="block text-xs font-bold text-[#5c4e37] mb-1">上傳圖片</label>
           <div class="flex items-center gap-3 bg-[#faf7f0] p-3 rounded-2xl border border-[#ede3cf]">
             <label class="bg-white hover:bg-[#faf7f0] text-[#5c4e37] border border-[#e6d9bf] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer whitespace-nowrap">
               <i data-lucide="image" class="w-4 h-4 text-[#bf9e74]"></i> 選擇圖片
@@ -688,6 +688,7 @@
       const savedBeads = localStorage.getItem('mard_beads_data');
       const savedPatterns = localStorage.getItem('mard_patterns_data');
       
+      // 1. 先完整讀取並初始化拼豆色號資料（此時不執行 saveData 避免空資料覆寫圖紙）
       if (savedBeads) {
         beads = JSON.parse(savedBeads);
         beads = beads.filter(b => b.code !== 'T1');
@@ -704,8 +705,8 @@
           b.name = getDefaultName(b.code);
         }
       });
-      saveData();
 
+      // 2. 緊接著完整讀取並初始化圖紙配方資料
       if (savedPatterns) {
         patterns = JSON.parse(savedPatterns);
         // 相容與升級舊格式
@@ -730,6 +731,9 @@
           };
         });
       }
+
+      // 3. 確保拼豆色號與圖紙配方「兩者皆已成功加載至記憶體」後，才進行安全性的第一次同步寫入
+      saveData();
 
       renderCategoryTabs();
       renderBeads();
@@ -765,7 +769,7 @@
         if (!isAZG && isBZG) return -1;
         return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
       });
-      saveData();
+      // 移除此處提早呼叫的 saveData() 避免覆寫未載入完成之圖紙
     }
 
     // 統一本機儲存（加入防容量爆滿機制）
@@ -1793,7 +1797,7 @@
 
           previewWrapper.classList.remove('hidden');
           previewImg.src = draftPatternImage;
-          statusText.innerText = '智慧壓縮完成，已節省空間！';
+          statusText.innerText = '上傳成功！';
           lucide.createIcons();
         };
         img.src = e.target.result;
@@ -2122,11 +2126,11 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `MARD_拼豆完整備份_${new Date().toISOString().slice(0,10)}.json`);
+      link.setAttribute("download", `拼豆備份_${new Date().toISOString().slice(0,10)}.json`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      showToast('🎉 系統全資料備份已成功導出！(包含自訂配方與分類設定)');
+      showToast('🎉備份已成功導出！');
     }
 
     function importSystemData(event) {
